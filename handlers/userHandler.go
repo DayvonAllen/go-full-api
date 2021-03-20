@@ -15,8 +15,6 @@ type UserHandler struct {
 }
 
 func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
-	//cookie := c.Cookies("session")
-
 	// get token from header
 	token := c.Get("Authorization")
 
@@ -53,9 +51,9 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
-	cookie := c.Cookies("session")
+	token := c.Get("Authorization")
 
-	err := helpers.IsLoggedIn(cookie, c)
+	err := helpers.IsLoggedIn(token, c)
 
 	if err != nil {
 		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -79,9 +77,9 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
-	cookie := c.Cookies("session")
+	token := c.Get("Authorization")
 
-	err := helpers.IsLoggedIn(cookie, c)
+	err := helpers.IsLoggedIn(token, c)
 
 	if err != nil {
 		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -114,9 +112,9 @@ func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
-	cookie := c.Cookies("session")
+	token := c.Get("Authorization")
 
-	err := helpers.IsLoggedIn(cookie, c)
+	err := helpers.IsLoggedIn(token, c)
 
 	if err != nil {
 		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

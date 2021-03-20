@@ -70,24 +70,25 @@ func (l Authentication) VerifySignature(token, sig []byte) (bool, error) {
 	return hmac.Equal(sig, s), nil
 }
 
-func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, error)  {
+func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, bool, error)  {
 	if tokenValue == ""  {
-		return nil, fmt.Errorf("no token")
+		return nil, false, fmt.Errorf("no token")
 	}
 
 	data, err := helper.ExtractData(tokenValue)
 
 	if err != nil {
-		return nil, err
+		return nil,false, err
 	}
 
 	validSig, err := l.VerifySignature([]byte(data[0]), []byte(data[1]))
+
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if !validSig {
-		return nil, err
+		return nil, false, err
 	}
 
 	token, err := jwt.ParseWithClaims(data[0], &Claims{},func(t *jwt.Token)(interface{}, error) {
@@ -99,7 +100,7 @@ func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, error)  {
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	isEqual := token.Valid
@@ -111,8 +112,8 @@ func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, error)  {
 
 		l.Id = claims.Id
 		l.Email = claims.Email
-		return &l, nil
+		return &l, true, nil
 	}
 
-	return nil, fmt.Errorf("token is not valid")
+	return nil, false, fmt.Errorf("token is not valid")
 }

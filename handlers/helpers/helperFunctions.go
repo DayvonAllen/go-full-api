@@ -8,9 +8,9 @@ import (
 
 func IsLoggedIn(token string, c *fiber.Ctx) error {
 	var auth domain.Authentication
-	_, err := auth.IsLoggedIn(token)
+	_, loggedIn, err := auth.IsLoggedIn(token)
 
-	if err != nil {
+	if err != nil || loggedIn == false {
 		c.Status(401)
 		return fmt.Errorf("unauthorized request")
 	}
