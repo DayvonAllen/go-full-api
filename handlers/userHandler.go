@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"time"
 )
 
 type UserHandler struct {
@@ -41,6 +42,8 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
+
+	user.CreatedAt = time.Now()
 	err = uh.UserService.CreateUser(user)
 
 	if err != nil {
@@ -99,6 +102,7 @@ func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
+	user.UpdatedAt = time.Now()
 	u, err := uh.UserService.UpdateUser(id, user)
 
 	if err != nil {
