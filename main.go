@@ -15,7 +15,9 @@ func init() {
 
 func main() {
 	app := fiber.New()
-	app.Use(cors.New())
+	app.Use(cors.New(cors.Config{
+		ExposeHeaders: "Authorization",
+	}))
 
 	router.SetupRoutes(app)
 	log.Fatal(app.Listen(":8080"))

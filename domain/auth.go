@@ -2,6 +2,7 @@ package domain
 
 import (
 	"crypto/hmac"
+	"example.com/app/config"
 	"example.com/app/domain/helper"
 
 	"crypto/sha256"
@@ -28,6 +29,8 @@ type Claims struct {
 	Email string
 }
 
+var k = config.Config("SECRET")
+
 func (l Authentication) GenerateJWT(msg User) (string, error){
 	claims := Claims{
 		StandardClaims: jwt.StandardClaims{
@@ -38,7 +41,7 @@ func (l Authentication) GenerateJWT(msg User) (string, error){
 	}
 	// always better to use a pointer with JSON
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
-	signedString, err := token.SignedString([]byte("Helloworld"))
+	signedString, err := token.SignedString([]byte(k))
 
 	if err != nil {
 		return "", err
@@ -49,7 +52,7 @@ func (l Authentication) GenerateJWT(msg User) (string, error){
 func (l Authentication) SignToken(token []byte) ([]byte, error) {
 	// second arg is a private key, key needs to be the same size as hasher
 	// sha512 is 64 bits
-	h := hmac.New(sha256.New, []byte("Helloworld"))
+	h := hmac.New(sha256.New, []byte(k))
 
 	// hash is a writer
 	_, err := h.Write(token)
@@ -67,12 +70,16 @@ func (l Authentication) VerifySignature(token, sig []byte) (bool, error) {
 	return hmac.Equal(sig, s), nil
 }
 
-func(l Authentication) IsLoggedIn(cookie string) (*Authentication, error)  {
-	if cookie == ""  {
-		return nil, fmt.Errorf("no cookie")
+func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, error)  {
+	if tokenValue == ""  {
+		return nil, fmt.Errorf("no token")
 	}
 
-	data := helper.ExtractData(cookie)
+	data, err := helper.ExtractData(tokenValue)
+
+	if err != nil {
+		return nil, err
+	}
 
 	validSig, err := l.VerifySignature([]byte(data[0]), []byte(data[1]))
 	if err != nil {
@@ -86,7 +93,7 @@ func(l Authentication) IsLoggedIn(cookie string) (*Authentication, error)  {
 	token, err := jwt.ParseWithClaims(data[0], &Claims{},func(t *jwt.Token)(interface{}, error) {
 		if t.Method.Alg() == jwt.SigningMethodHS256.Alg() {
 			//verify token(we pass in our key to be verified)
-			return []byte("Helloworld"), nil
+			return []byte(k), nil
 		}
 		return nil, err
 	})

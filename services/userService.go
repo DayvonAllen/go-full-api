@@ -5,6 +5,7 @@ import (
 	"example.com/app/repo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 type UserService interface {
@@ -53,6 +54,8 @@ func (s DefaultUserService) DeleteByID(id primitive.ObjectID) error {
 }
 
 func (s DefaultUserService) CreateUser(user *domain.User) error {
+	user.Username = strings.ToLower(user.Username)
+	user.Email = strings.ToLower(user.Email)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	user.Password = string(hashedPassword)
 	err := s.repo.Create(user)

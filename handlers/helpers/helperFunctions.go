@@ -6,9 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func IsLoggedIn(cookie string, c *fiber.Ctx) error {
+func IsLoggedIn(token string, c *fiber.Ctx) error {
 	var auth domain.Authentication
-	_, err := auth.IsLoggedIn(cookie)
+	_, err := auth.IsLoggedIn(token)
 
 	if err != nil {
 		c.Status(401)

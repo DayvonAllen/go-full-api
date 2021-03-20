@@ -3,6 +3,7 @@ package services
 import (
 	"example.com/app/domain"
 	"example.com/app/repo"
+	"strings"
 )
 
 type AuthService interface {
@@ -13,8 +14,8 @@ type DefaultAuthService struct {
 	repo repo.AuthRepo
 }
 
-func (a DefaultAuthService) Login(username, password string) (*domain.User, string, error) {
-	u, token, err := a.repo.Login(username, password)
+func (a DefaultAuthService) Login(email, password string) (*domain.User, string, error) {
+	u, token, err := a.repo.Login(strings.ToLower(email), password)
 	if err != nil {
 		return nil, "", err
 	}

@@ -3,9 +3,9 @@ package handlers
 import (
 	"example.com/app/domain"
 	"example.com/app/services"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
 
 type AuthHandler struct {
@@ -18,8 +18,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 	err := c.BodyParser(details)
 
 	if err != nil {
-		c.Status(400)
-		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": err})
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
 	var auth domain.Authentication
@@ -28,11 +27,9 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			c.Status(401)
-			return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": err})
+			return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		c.Status(500)
-		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": err})
+		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
 	signedToken := make([]byte, 0, 100)
@@ -40,18 +37,12 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 	t, err := auth.SignToken([]byte(token))
 
 	if err != nil {
-		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": err})
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
 	signedToken = append(signedToken, t...)
 
-	cookie := new(fiber.Cookie)
-	cookie.Name = "session"
-	cookie.Value = string(signedToken)
-	cookie.Expires = time.Now().Add(24 * time.Hour)
+	c.Set("Authorization", string(signedToken))
 
-	// Set cookie
-	c.Cookie(cookie)
-
-	return c.JSON(fiber.Map{"status": "success", "message": "success", "data": user})
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
 }

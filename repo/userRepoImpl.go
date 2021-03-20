@@ -4,6 +4,7 @@ import (
 	"context"
 	"example.com/app/database"
 	"example.com/app/domain"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -18,14 +19,23 @@ type UserRepoImpl struct {
 var dbConnection = database.GetInstance()
 
 func (u UserRepoImpl) Create(user *domain.User) error {
-	user.Id = primitive.NewObjectID()
-	_, err := dbConnection.Collection.InsertOne(context.TODO(), &user)
+	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&u.user)
 
 	if err != nil {
-		return err
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			user.Id = primitive.NewObjectID()
+			_, err := dbConnection.Collection.InsertOne(context.TODO(), &user)
+
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("user with email %v already exists", user.Email)
 }
 
 func (u UserRepoImpl) FindAll() (*[]domain.User, error) {
@@ -86,7 +96,7 @@ func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*dom
 	update := bson.D{{"$set", bson.D{{"Email", user.Email}}}}
 
 	err := database.GetInstance().Collection.FindOneAndUpdate(context.TODO(),
-		filter, update, opts).Decode(&u.users)
+		filter, update, opts).Decode(&u.user)
 
 	if err != nil {
 		return nil, err

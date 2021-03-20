@@ -1,10 +1,20 @@
 package helper
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
-func ExtractData(cookie  string) []string {
-	xs := strings.Split(cookie, " ")
+func ExtractData(token  string) ([]string, error) {
+	if token == "" {
+		return nil, fmt.Errorf("no token provided")
+	}
+	xs := strings.Split(token, " ")
+
+	if len(xs) != 2 {
+		return nil, fmt.Errorf("invalid token provided")
+	}
 
 	tokenValue := strings.Split(xs[1], "|")
-	return  tokenValue
+	return  tokenValue, nil
 }
