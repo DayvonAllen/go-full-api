@@ -50,4 +50,3 @@ func connectToDB() error {
 
 	return nil
 }
-

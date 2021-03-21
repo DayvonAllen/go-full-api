@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"example.com/app/domain"
-	"example.com/app/handlers/helpers"
 	"example.com/app/services"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -16,15 +15,6 @@ type UserHandler struct {
 }
 
 func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
-	// get token from header
-	token := c.Get("Authorization")
-
-	err := helpers.IsLoggedIn(token, c)
-
-	if err != nil {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-	}
-
 	users, err := uh.UserService.GetAllUsers()
 
 	if err != nil {
@@ -55,14 +45,6 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	err := helpers.IsLoggedIn(token, c)
-
-	if err != nil {
-		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-	}
-
 	id, err := primitive.ObjectIDFromHex(c.Params("id"))
 
 	if err != nil {
@@ -82,13 +64,6 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 
 func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	token := c.Get("Authorization")
-
-	err := helpers.IsLoggedIn(token, c)
-
-	if err != nil {
-		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-	}
 
 	id , err := primitive.ObjectIDFromHex(c.Params("id"))
 
@@ -118,14 +93,6 @@ func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
-
-	err := helpers.IsLoggedIn(token, c)
-
-	if err != nil {
-		return c.JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-	}
-
 	id , err := primitive.ObjectIDFromHex(c.Params("id"))
 
 	if err != nil {
