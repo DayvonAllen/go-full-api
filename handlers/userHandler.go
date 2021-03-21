@@ -35,6 +35,7 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
+	c.Accepts("application/json")
 	user := new(domain.User)
 
 	err := c.BodyParser(user)
@@ -80,6 +81,7 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
+	c.Accepts("application/json")
 	token := c.Get("Authorization")
 
 	err := helpers.IsLoggedIn(token, c)

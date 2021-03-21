@@ -2,14 +2,13 @@ package domain
 
 import (
 	"crypto/hmac"
+	"crypto/sha256"
 	"example.com/app/config"
 	"example.com/app/domain/helper"
-
-	"crypto/sha256"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
+	"strconv"
 	"time"
 )
 
@@ -32,9 +31,15 @@ type Claims struct {
 var k = config.Config("SECRET")
 
 func (l Authentication) GenerateJWT(msg User) (string, error){
+	e, err := strconv.Atoi(config.Config("EXPIRATION"))
+
+	if err != nil {
+		return "", err
+	}
+
 	claims := Claims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
+			ExpiresAt: time.Now().Add(time.Duration(e) * time.Minute).Unix(),
 		},
 		Id: msg.Id,
 		Email: msg.Email,

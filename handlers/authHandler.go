@@ -13,6 +13,7 @@ type AuthHandler struct {
 }
 
 func (ah *AuthHandler) Login(c *fiber.Ctx) error {
+	c.Accepts("application/json")
 	details := new(domain.LoginDetails)
 
 	err := c.BodyParser(details)
