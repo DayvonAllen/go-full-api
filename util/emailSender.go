@@ -10,7 +10,7 @@ import (
 
 
 func SendEmail() {
-	from := mail.NewEmail("Example User", "test@example.com")
+	from := mail.NewEmail("User", "test@example.com")
 	subject := "Sending with SendGrid is Fun"
 	to := mail.NewEmail("Example User", "test@example.com")
 	plainTextContent := "and easy to do anywhere, even with Go"
