@@ -84,3 +84,17 @@ func (ah *AuthHandler) ResetPassword(c *fiber.Ctx) error {
 
 	return nil
 }
+
+func (ah *AuthHandler) VerifyCode(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+
+	code := c.Params("code")
+
+	err := ah.AuthService.VerifyCode(code)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	return nil
+}

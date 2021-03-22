@@ -10,6 +10,7 @@ type UserRepo interface {
 	Create(*domain.User) error
 	FindByID(primitive.ObjectID) (*domain.UserDto, error)
 	UpdateByID(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
+	UpdateVerification(*domain.User) (*domain.UserDto, error)
 	UpdatePassword(string, *domain.User) (*domain.UserDto, error)
 	DeleteByID(primitive.ObjectID) error
 }

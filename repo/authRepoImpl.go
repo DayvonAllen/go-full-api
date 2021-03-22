@@ -55,7 +55,6 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 	}
 
 	// logic to send email with JWT
-	fmt.Println(fmt.Sprintf("email sent to %v", email))
 	if user.TokenHash == "" || user.TokenExpiresAt < time.Now().Unix() {
 		a := new(domain.Authentication)
 		h := utils.UUIDv4()
@@ -110,6 +109,35 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 
 	return nil
 }
+
+func (a AuthRepoImpl) VerifyCode(code string) error{
+	var user domain.User
+	ur := new(UserRepoImpl)
+	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
+
+	if user.IsVerified {
+		return fmt.Errorf("user email already verified")
+	}
+
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return fmt.Errorf("no token found")
+		}
+		return err
+	}
+
+	user.IsVerified = true
+
+	_, err = ur.UpdateVerification(&user)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 
 func NewAuthRepoImpl() AuthRepoImpl {
 	var authRepoImpl AuthRepoImpl

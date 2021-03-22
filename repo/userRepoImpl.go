@@ -107,6 +107,21 @@ func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*dom
 	return &u.userDto, nil
 }
 
+func (u UserRepoImpl) UpdateVerification(user *domain.User) (*domain.UserDto, error) {
+	opts := options.FindOneAndUpdate().SetUpsert(true)
+	filter := bson.D{{"_id", user.Id}}
+	update := bson.D{{"$set", bson.D{{"isVerified", user.IsVerified}}}}
+
+	err := database.GetInstance().Collection.FindOneAndUpdate(context.TODO(),
+		filter, update, opts).Decode(&u.userDto)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &u.userDto, nil
+}
+
 func (u UserRepoImpl) UpdatePassword(password string, user *domain.User) (*domain.UserDto, error) {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", user.Id}}

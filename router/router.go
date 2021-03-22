@@ -19,6 +19,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/login", ah.Login)
 	auth.Post("/reset", ah.ResetPasswordQuery)
 	auth.Post("/reset/:token", ah.ResetPassword)
+	auth.Get("/account/:code", ah.VerifyCode)
 
 	user := api.Group("/users")
 	user.Get("/", middleware.IsLoggedIn, uh.GetAllUsers)
