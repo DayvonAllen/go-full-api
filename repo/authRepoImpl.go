@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"example.com/app/config"
 	"example.com/app/domain"
 	"fmt"
 	"github.com/gofiber/fiber/v2/utils"
@@ -9,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
+	"strconv"
 	"time"
 )
 
@@ -64,9 +66,15 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 			return err
 		}
 
+		expiration, err := strconv.Atoi(config.Config("PASSWORD_RESET_TOKEN_EXPIRATION"))
+
+		if err != nil {
+			return err
+		}
+
 		hash := h + "-" + string(s)
 		user.TokenHash = hash
-		user.TokenExpiresAt = time.Now().Add(time.Duration(1) * time.Minute).Unix()
+		user.TokenExpiresAt = time.Now().Add(time.Duration(expiration) * time.Minute).Unix()
 		ur := new(UserRepoImpl)
 		_, err = ur.UpdateByID(user.Id, &user)
 
