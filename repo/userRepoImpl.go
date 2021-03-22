@@ -14,6 +14,8 @@ import (
 type UserRepoImpl struct {
 	users []domain.User
 	user domain.User
+	userDto domain.UserDto
+	userDtoList []domain.UserDto
 }
 
 var dbConnection = database.GetInstance()
@@ -38,7 +40,7 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 	return fmt.Errorf("user with email %v already exists", user.Email)
 }
 
-func (u UserRepoImpl) FindAll() (*[]domain.User, error) {
+func (u UserRepoImpl) FindAll() (*[]domain.UserDto, error) {
 	// Get all users
 	cur, err := dbConnection.Collection.Find(context.TODO(), bson.M{})
 
@@ -51,14 +53,14 @@ func (u UserRepoImpl) FindAll() (*[]domain.User, error) {
 	for cur.Next(context.TODO()) {
 
 		// create a value into which the single document can be decoded
-		var elem domain.User
+		var elem domain.UserDto
 		err := cur.Decode(&elem)
 
 		if err != nil {
 			return nil, err
 		}
 
-		u.users = append(u.users, elem)
+		u.userDtoList = append(u.userDtoList, elem)
 	}
 
 	err = cur.Err()
@@ -73,11 +75,11 @@ func (u UserRepoImpl) FindAll() (*[]domain.User, error) {
 		return nil, err
 	}
 
-	return &u.users, nil
+	return &u.userDtoList, nil
 }
 
-func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.User, error) {
-	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.user)
+func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
+	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -87,22 +89,37 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.User, error) {
 		return nil, err
 	}
 
-	return &u.user, nil
+	return &u.userDto, nil
 }
 
-func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*domain.User, error) {
+func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*domain.UserDto, error) {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
-	update := bson.D{{"$set", bson.D{{"Email", user.Email}}}}
+	update := bson.D{{"$set", bson.D{{"tokenHash", user.TokenHash}, {"tokenExpiresAt", user.TokenExpiresAt}}}}
 
 	err := database.GetInstance().Collection.FindOneAndUpdate(context.TODO(),
-		filter, update, opts).Decode(&u.user)
+		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &u.user, nil
+	return &u.userDto, nil
+}
+
+func (u UserRepoImpl) UpdatePassword(password string, user *domain.User) (*domain.UserDto, error) {
+	opts := options.FindOneAndUpdate().SetUpsert(true)
+	filter := bson.D{{"_id", user.Id}}
+	update := bson.D{{"$set", bson.D{{"password", password}, {"tokenHash", ""}, {"tokenExpiresAt", 0}}}}
+
+	err := database.GetInstance().Collection.FindOneAndUpdate(context.TODO(),
+		filter, update, opts).Decode(&u.userDto)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &u.userDto, nil
 }
 
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID) error {

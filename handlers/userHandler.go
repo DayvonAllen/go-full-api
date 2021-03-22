@@ -27,13 +27,19 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	user := new(domain.User)
+	createUserDto := new(domain.CreateUserDto)
 
-	err := c.BodyParser(user)
+	err := c.BodyParser(createUserDto)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
+	user.Username = createUserDto.Username
+	user.Email = createUserDto.Email
+	user.Password = createUserDto.Password
+	user.IsVerified = false
+	user.IsLocked = false
 	user.CreatedAt = time.Now()
 	err = uh.UserService.CreateUser(user)
 
@@ -71,14 +77,17 @@ func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
+	userDto := new(domain.UpdateUserDto)
 	user := new(domain.User)
 
-	err = c.BodyParser(user)
+	err = c.BodyParser(userDto)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
+	user.Username = userDto.Username
+	user.Email = userDto.Email
 	user.UpdatedAt = time.Now()
 	u, err := uh.UserService.UpdateUser(id, user)
 

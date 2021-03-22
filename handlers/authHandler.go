@@ -15,7 +15,6 @@ type AuthHandler struct {
 func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	details := new(domain.LoginDetails)
-
 	err := c.BodyParser(details)
 
 	if err != nil {
@@ -30,7 +29,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("processing error")})
 	}
 
 	signedToken := make([]byte, 0, 100)
@@ -46,4 +45,42 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 	c.Set("Authorization", string(signedToken))
 
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
+}
+
+func (ah *AuthHandler) ResetPasswordQuery(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	q := new(domain.ResetPasswordQuery)
+	err := c.BodyParser(q)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	err = ah.AuthService.ResetPasswordQuery(q.Email)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	return nil
+}
+
+func (ah *AuthHandler) ResetPassword(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	p := new(domain.ResetPassword)
+	err := c.BodyParser(p)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	token := c.Params("token")
+
+	err = ah.AuthService.ResetPassword(token, p.Password)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	return nil
 }

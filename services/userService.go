@@ -9,10 +9,11 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers() (*[]domain.User, error)
+	GetAllUsers() (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
-	UpdateUser(primitive.ObjectID, *domain.User) (*domain.User, error)
-	GetUserByID(primitive.ObjectID) (*domain.User, error)
+	UpdateUser(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
+	UpdatePassword(string, *domain.User) (*domain.UserDto, error)
+	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
 	DeleteByID(primitive.ObjectID) error
 }
 
@@ -21,7 +22,7 @@ type DefaultUserService struct {
 	repo repo.UserRepo
 }
 
-func (s DefaultUserService) GetAllUsers() (*[]domain.User, error) {
+func (s DefaultUserService) GetAllUsers() (*[]domain.UserDto, error) {
 	u, err := s.repo.FindAll()
 	if err != nil {
 		return nil, err
@@ -29,7 +30,7 @@ func (s DefaultUserService) GetAllUsers() (*[]domain.User, error) {
 	return  u, nil
 }
 
-func (s DefaultUserService) GetUserByID(id primitive.ObjectID) (*domain.User, error) {
+func (s DefaultUserService) GetUserByID(id primitive.ObjectID) (*domain.UserDto, error) {
 	u, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -37,8 +38,16 @@ func (s DefaultUserService) GetUserByID(id primitive.ObjectID) (*domain.User, er
 	return u, nil
 }
 
-func (s DefaultUserService) UpdateUser(id primitive.ObjectID, user *domain.User) (*domain.User, error) {
+func (s DefaultUserService) UpdateUser(id primitive.ObjectID, user *domain.User) (*domain.UserDto, error) {
 	u, err := s.repo.UpdateByID(id, user)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func (s DefaultUserService) UpdatePassword(password string, user *domain.User) (*domain.UserDto, error) {
+	u, err := s.repo.UpdatePassword(password, user)
 	if err != nil {
 		return nil, err
 	}

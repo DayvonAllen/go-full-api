@@ -6,9 +6,10 @@ import (
 )
 
 type UserRepo interface {
-	FindAll() (*[]domain.User, error)
+	FindAll() (*[]domain.UserDto, error)
 	Create(*domain.User) error
-	FindByID(primitive.ObjectID) (*domain.User, error)
-	UpdateByID(primitive.ObjectID, *domain.User) (*domain.User, error)
+	FindByID(primitive.ObjectID) (*domain.UserDto, error)
+	UpdateByID(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
+	UpdatePassword(string, *domain.User) (*domain.UserDto, error)
 	DeleteByID(primitive.ObjectID) error
 }

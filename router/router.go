@@ -17,11 +17,12 @@ func SetupRoutes(app *fiber.App) {
 
 	auth := api.Group("/auth")
 	auth.Post("/login", ah.Login)
+	auth.Post("/reset", ah.ResetPasswordQuery)
+	auth.Post("/reset/:token", ah.ResetPassword)
 
 	user := api.Group("/users")
 	user.Get("/", middleware.IsLoggedIn, uh.GetAllUsers)
 	user.Get("/:id", middleware.IsLoggedIn, uh.GetUserByID)
 	user.Post("/", uh.CreateUser)
-	user.Put("/:id", middleware.IsLoggedIn, uh.UpdateUser)
 	user.Delete("/:id", middleware.IsLoggedIn, uh.DeleteByID)
 }

@@ -22,6 +22,14 @@ type LoginDetails struct {
 	Password string
 }
 
+type ResetPasswordQuery struct {
+	Email string
+}
+
+type ResetPassword struct {
+	Password string
+}
+
 type Claims struct {
 	jwt.StandardClaims
 	Id primitive.ObjectID
