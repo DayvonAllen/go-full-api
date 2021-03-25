@@ -14,7 +14,7 @@ type User struct {
 	IsVerified  bool             `bson:"isVerified" json:"isVerified"`
 	TokenHash string             `bson:"tokenHash" json:"tokenHash"`
 	VerificationCode string      `bson:"verificationCode" json:"verificationCode"`
-	TokenExpiresAt int64    		 `bson:"tokenExpiresAt" json:"tokenExpiresAt"`
+	TokenExpiresAt int64         `bson:"tokenExpiresAt" json:"tokenExpiresAt"`
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt,omitempty"`
 	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt,omitempty"`
 }
