@@ -23,7 +23,12 @@ func SetupRoutes(app *fiber.App) {
 
 	user := api.Group("/users")
 	user.Get("/", middleware.IsLoggedIn, uh.GetAllUsers)
-	user.Get("/:id", middleware.IsLoggedIn, uh.GetUserByID)
+	user.Get("/account", middleware.IsLoggedIn, uh.GetUserByID)
 	user.Post("/", uh.CreateUser)
-	user.Delete("/:id", middleware.IsLoggedIn, uh.DeleteByID)
+	user.Put("/profile-visibility", uh.UpdateProfileVisibility)
+	user.Put("/message-acceptance", uh.UpdateMessageAcceptance)
+	user.Put("/current-badge", uh.UpdateCurrentBadge)
+	user.Put("/profile-photo", uh.UpdateProfilePicture)
+	user.Put("/current-tagline", uh.UpdateCurrentTagline)
+	user.Delete("/delete", uh.DeleteByID)
 }

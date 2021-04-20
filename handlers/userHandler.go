@@ -3,11 +3,10 @@ package handlers
 import (
 	"example.com/app/domain"
 	"example.com/app/services"
+	"example.com/app/util"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
 )
 
 type UserHandler struct {
@@ -26,7 +25,6 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 
 func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 	c.Accepts("application/json")
-	user := new(domain.User)
 	createUserDto := new(domain.CreateUserDto)
 
 	err := c.BodyParser(createUserDto)
@@ -35,12 +33,8 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	user.Username = createUserDto.Username
-	user.Email = createUserDto.Email
-	user.Password = createUserDto.Password
-	user.IsVerified = false
-	user.IsLocked = false
-	user.CreatedAt = time.Now()
+	user := util.CreateUser(createUserDto)
+
 	err = uh.UserService.CreateUser(user)
 
 	if err != nil {
@@ -51,13 +45,17 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
-	id, err := primitive.ObjectIDFromHex(c.Params("id"))
+	token := c.Get("Authorization")
 
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	user, err := uh.UserService.GetUserByID(id)
+	user, err := uh.UserService.GetUserByID(u.Id)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -68,17 +66,19 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
 }
 
-func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
+func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 	c.Accepts("application/json")
+	token := c.Get("Authorization")
 
-	id , err := primitive.ObjectIDFromHex(c.Params("id"))
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
 
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	userDto := new(domain.UpdateUserDto)
-	user := new(domain.User)
+	userDto := new(domain.UpdateProfileVisibility)
 
 	err = c.BodyParser(userDto)
 
@@ -86,10 +86,7 @@ func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	user.Username = userDto.Username
-	user.Email = userDto.Email
-	user.UpdatedAt = time.Now()
-	u, err := uh.UserService.UpdateUser(id, user)
+	err = uh.UserService.UpdateProfileVisibility(u.Id, userDto)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -97,18 +94,144 @@ func (uh *UserHandler) UpdateUser(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": u})
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
-func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
-	id , err := primitive.ObjectIDFromHex(c.Params("id"))
+func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	userDto := new(domain.UpdateMessageAcceptance)
+
+	err = c.BodyParser(userDto)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = uh.UserService.DeleteByID(id)
+	err = uh.UserService.UpdateMessageAcceptance(u.Id, userDto)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
+func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	userDto := new(domain.UpdateCurrentBadge)
+
+	err = c.BodyParser(userDto)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	err = uh.UserService.UpdateCurrentBadge(u.Id, userDto)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
+func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	userDto := new(domain.UpdateProfilePicture)
+
+	err = c.BodyParser(userDto)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	err = uh.UserService.UpdateProfilePicture(u.Id, userDto)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
+func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	userDto := new(domain.UpdateCurrentTagline)
+
+	err = c.BodyParser(userDto)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	err = uh.UserService.UpdateCurrentTagline(u.Id, userDto)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
+func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	err = uh.UserService.DeleteByID(u.Id)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

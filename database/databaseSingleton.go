@@ -11,14 +11,15 @@ import (
 
 type Connection struct {
 	*mongo.Client
-	*mongo.Collection
+	userCollection *mongo.Collection
+	flagCollection *mongo.Collection
 	*mongo.Database
 }
 
 var dbConnection *Connection
 var once sync.Once
 
-// creates one instance and always returns that one instance
+// GetInstance creates one instance and always returns that one instance
 func GetInstance() *Connection {
 	// only executes this once
 	once.Do(func() {
@@ -45,8 +46,9 @@ func connectToDB() error {
 
 	// create collection
 	userCollection := db.Collection("users")
+	flagCollection := db.Collection("flag")
 
-	dbConnection = &Connection{client, userCollection, db}
+	dbConnection = &Connection{client, userCollection, flagCollection, db}
 
 	return nil
 }

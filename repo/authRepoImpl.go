@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,12 +19,12 @@ type AuthRepoImpl struct {
 	*domain.User
 }
 
-func(a AuthRepoImpl) Login(email, password string) (*domain.User, string, error) {
+func(a AuthRepoImpl) Login(email, password string) (*domain.UserDto, string, error) {
 	var login domain.Authentication
 	var user domain.User
 	opts := options.FindOne()
-	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"email",
-		email}},opts).Decode(&user)
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"email",
+		strings.ToLower(email)}},opts).Decode(&user)
 
 	if err != nil {
 		return nil, "", err
@@ -41,12 +42,14 @@ func(a AuthRepoImpl) Login(email, password string) (*domain.User, string, error)
 		return nil, "", err
 	}
 
-	return &user, token, nil
+	userDto := domain.UserMapper(&user)
+
+	return userDto, token, nil
 }
 
 func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 	var user domain.User
-	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"email", email}}).Decode(&user)
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -94,7 +97,7 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 func(a AuthRepoImpl) ResetPassword(token, password string) error {
 	var user domain.User
 	ur := new(UserRepoImpl)
-	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -109,7 +112,7 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 	}
 
 	// update password logic
-	_, err = ur.UpdatePassword(password, &user)
+	err = ur.UpdatePassword(user.Id, password)
 
 	if err != nil {
 		return err
@@ -121,7 +124,7 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 func (a AuthRepoImpl) VerifyCode(code string) error{
 	var user domain.User
 	ur := new(UserRepoImpl)
-	err := dbConnection.Collection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
 
 	if user.IsVerified {
 		return fmt.Errorf("user email already verified")
@@ -135,9 +138,11 @@ func (a AuthRepoImpl) VerifyCode(code string) error{
 		return err
 	}
 
-	user.IsVerified = true
+	u := new(domain.UpdateVerification)
 
-	_, err = ur.UpdateVerification(&user)
+	u.IsVerified = true
+
+	err = ur.UpdateVerification(user.Id, u)
 
 	if err != nil {
 		return err

@@ -4,7 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"example.com/app/config"
-	"example.com/app/domain/helper"
+	helper2 "example.com/app/helpers"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -88,7 +88,7 @@ func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, bool, err
 		return nil, false, fmt.Errorf("no token")
 	}
 
-	data, err := helper.ExtractData(tokenValue)
+	data, err := helper2.ExtractData(tokenValue)
 
 	if err != nil {
 		return nil,false, err
