@@ -9,6 +9,7 @@ type UserRepo interface {
 	FindAll() (*[]domain.UserDto, error)
 	Create(*domain.User) error
 	FindByID(primitive.ObjectID) (*domain.UserDto, error)
+	FindByUsername(string) (*domain.UserDto, error)
 	UpdateByID(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility) error
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"
+	"strings"
 )
 
 type UserHandler struct {
@@ -56,6 +57,20 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 	}
 
 	user, err := uh.UserService.GetUserByID(u.Id)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
+}
+
+func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
+	username := c.Params("username")
+
+	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username))
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

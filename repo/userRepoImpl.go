@@ -97,6 +97,20 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
 	return &u.userDto, nil
 }
 
+func (u UserRepoImpl) FindByUsername(username string) (*domain.UserDto, error) {
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return &u.userDto, nil
+}
+
 func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*domain.UserDto, error) {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}

@@ -13,6 +13,7 @@ type UserService interface {
 	GetAllUsers() (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
+	GetUserByUsername(string) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility) error
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
@@ -61,6 +62,14 @@ func (s DefaultUserService) CreateUser(user *domain.User) error {
 
 func (s DefaultUserService) GetUserByID(id primitive.ObjectID) (*domain.UserDto, error) {
 	u, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func (s DefaultUserService) GetUserByUsername(username string) (*domain.UserDto, error) {
+	u, err := s.repo.FindByUsername(username)
 	if err != nil {
 		return nil, err
 	}

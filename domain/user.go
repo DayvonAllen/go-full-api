@@ -60,12 +60,13 @@ type UpdateVerification struct {
 }
 
 type UserDto struct {
-	Email string                 `json:"email,omitempty"`
-	CurrentTagLine  string       `json:"currentTagLine,omitempty"`
-	UnlockedTagLine  []string    `json:"unlockedTagLine,omitempty"`
-	ProfilePictureUrl  string    `json:"profilePictureUrl,omitempty"`
-	CurrentBadgeUrl  string      `json:"currentBadgeUrl,omitempty"`
-	UnlockedBadgesUrls  []string `json:"unlockedBadgesUrls,omitempty"`
-	ProfileIsViewable  bool      `json:"profileIsViewable,omitempty"`
-	AcceptMessages  bool         `json:"acceptMessages,omitempty"`
+	Email string                 `json:"email"`
+	Username string              `json:"username"`
+	CurrentTagLine  string       `json:"currentTagLine"`
+	UnlockedTagLine  []string    `json:"unlockedTagLine"`
+	ProfilePictureUrl  string    `json:"profilePictureUrl"`
+	CurrentBadgeUrl  string      `json:"currentBadgeUrl"`
+	UnlockedBadgesUrls  []string `json:"unlockedBadgesUrls"`
+	ProfileIsViewable  bool      `json:"profileIsViewable"`
+	AcceptMessages  bool         `json:"acceptMessages"`
 }

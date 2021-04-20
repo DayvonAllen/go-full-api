@@ -151,7 +151,6 @@ func (a AuthRepoImpl) VerifyCode(code string) error{
 	return nil
 }
 
-
 func NewAuthRepoImpl() AuthRepoImpl {
 	var authRepoImpl AuthRepoImpl
 
