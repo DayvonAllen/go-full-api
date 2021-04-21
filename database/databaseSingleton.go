@@ -46,7 +46,7 @@ func connectToDB() error {
 
 	// create collection
 	userCollection := db.Collection("users")
-	flagCollection := db.Collection("flag")
+	flagCollection := db.Collection("flags")
 
 	dbConnection = &Connection{client, userCollection, flagCollection, db}
 

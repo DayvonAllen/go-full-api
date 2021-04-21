@@ -18,5 +18,6 @@ type UserRepo interface {
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
+	UpdateFlagCount(*domain.Flag) error
 	DeleteByID(primitive.ObjectID) error
 }

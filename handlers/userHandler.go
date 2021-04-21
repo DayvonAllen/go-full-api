@@ -236,6 +236,41 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
+func (uh *UserHandler) UpdateFlagCount(c *fiber.Ctx) error {
+	username := c.Params("username")
+	c.Accepts("application/json")
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	flag := new(domain.Flag)
+
+	err = c.BodyParser(flag)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	flag.FlaggedUsername = strings.ToLower(username)
+	flag.FlaggerID = u.Id
+
+	err = uh.UserService.UpdateFlagCount(flag)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
 func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
 	token := c.Get("Authorization")
 

@@ -203,6 +203,40 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 	return  nil
 }
 
+func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
+
+	cur, err := dbConnection.Collection("flags").Find(context.TODO(), bson.M{
+		"$and": []interface{}{
+			bson.M{"flaggerID": flag.FlaggerID},
+			bson.M{"flaggedUsername": flag.FlaggedUsername},
+		},
+
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !cur.Next(context.TODO()) {
+		flag.Id = primitive.NewObjectID()
+		_, err = dbConnection.Collection("flags").InsertOne(context.TODO(), &flag)
+
+		filter := bson.D{{"username", flag.FlaggedUsername}}
+		update := bson.M{"$push": bson.M{"flagCount":flag}}
+
+		_, err := database.GetInstance().Collection("users").UpdateOne(context.TODO(),
+			filter, update)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	return  fmt.Errorf("you've already flagged this user")
+}
+
+
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID) error {
 	_, err := database.GetInstance().Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", id}})
 	if err != nil {

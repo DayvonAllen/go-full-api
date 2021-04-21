@@ -16,6 +16,7 @@ func CreateUser(createUserDto *domain.CreateUserDto) *domain.User {
 	user.IsLocked = false
 	user.ProfileIsViewable = true
 	user.AcceptMessages = true
+	user.FlagCount = []domain.Flag{}
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 

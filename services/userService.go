@@ -21,6 +21,7 @@ type UserService interface {
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
+	UpdateFlagCount(*domain.Flag) error
 	DeleteByID(primitive.ObjectID) error
 }
 
@@ -126,6 +127,14 @@ func (s DefaultUserService) UpdatePassword(id primitive.ObjectID, password strin
 
 func (s DefaultUserService) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
 	err := s.repo.UpdateVerification(id, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s DefaultUserService) UpdateFlagCount(flag *domain.Flag) error {
+	err := s.repo.UpdateFlagCount(flag)
 	if err != nil {
 		return err
 	}
