@@ -15,6 +15,7 @@ type UserRepo interface {
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
 	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture) error
+	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture) error
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error

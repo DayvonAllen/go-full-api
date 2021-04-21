@@ -170,6 +170,17 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 	return  nil
 }
 
+func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture) error {
+	opts := options.FindOneAndUpdate().SetUpsert(true)
+	filter := bson.D{{"_id", id}}
+	update := bson.D{{"$set", bson.D{{"profileBackgroundPictureUrl", user.ProfileBackgroundPictureUrl}}}}
+
+	database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
+		filter, update, opts)
+
+	return  nil
+}
+
 func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}

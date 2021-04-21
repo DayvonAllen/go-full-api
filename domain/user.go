@@ -13,6 +13,7 @@ type User struct {
 	CurrentTagLine  string       `bson:"currentTagLine" json:"CurrentTagLine"`
 	UnlockedTagLine  []string    `bson:"unlockedTagLine" json:"unlockedTagLine"`
 	ProfilePictureUrl  string    `bson:"profilePictureUrl" json:"profilePictureUrl"`
+	ProfileBackgroundPictureUrl  string  `bson:"profileBackgroundPictureUrl" json:"profileBackgroundPictureUrl"`
 	CurrentBadgeUrl  string      `bson:"currentBadgeUrl" json:"currentBadgeUrl"`
 	UnlockedBadgesUrls  []string `bson:"unlockedBadgesUrls" json:"unlockedBadgesUrls"`
 	BlockList []string			 `bson:"blockList" json:"blockList"`
@@ -49,6 +50,10 @@ type UpdateCurrentBadge struct {
 
 type UpdateProfilePicture struct {
 	ProfilePictureUrl  string `json:"profilePictureUrl,omitempty"`
+}
+
+type UpdateProfileBackgroundPicture struct {
+	ProfileBackgroundPictureUrl  string `json:"profileBackgroundPictureUrl,omitempty"`
 }
 
 type UpdateCurrentTagline struct {

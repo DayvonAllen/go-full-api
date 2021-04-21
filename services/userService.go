@@ -18,6 +18,7 @@ type UserService interface {
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
 	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture) error
+	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture) error
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
@@ -103,6 +104,13 @@ func (s DefaultUserService) UpdateCurrentBadge(id primitive.ObjectID, user *doma
 
 func (s DefaultUserService) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture) error {
 	err := s.repo.UpdateProfilePicture(id, user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s DefaultUserService) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture) error {
+	err := s.repo.UpdateProfileBackgroundPicture(id, user)
 	if err != nil {
 		return err
 	}

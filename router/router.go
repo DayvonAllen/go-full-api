@@ -31,6 +31,7 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/message-acceptance", uh.UpdateMessageAcceptance)
 	user.Put("/current-badge", uh.UpdateCurrentBadge)
 	user.Put("/profile-photo", uh.UpdateProfilePicture)
+	user.Put("/background-photo", uh.UpdateProfileBackgroundPicture)
 	user.Put("/current-tagline", uh.UpdateCurrentTagline)
 	user.Delete("/delete", uh.DeleteByID)
 }
