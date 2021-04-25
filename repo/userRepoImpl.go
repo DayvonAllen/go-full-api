@@ -135,9 +135,16 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 			return fmt.Errorf("error processing data")
 		}
 
+		um := new(domain.UserMessage)
+
+		um.User = *user
+
+		// user created event
+		um.MessageType = 201
+
 		// turn user struct into a byte array
 		userBytes := new(bytes.Buffer)
-		err = json.NewEncoder(userBytes).Encode(&user)
+		err = json.NewEncoder(userBytes).Encode(&um)
 
 		err = events.PushUserToQueue(userBytes.Bytes())
 

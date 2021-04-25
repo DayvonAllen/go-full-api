@@ -1,6 +1,7 @@
 package events
 
 import (
+	"example.com/app/config"
 	"fmt"
 	"github.com/Shopify/sarama"
 )
@@ -10,7 +11,7 @@ func PushUserToQueue(message []byte) error {
 	producer := GetInstance()
 
 	msg := &sarama.ProducerMessage{
-		Topic: "user",
+		Topic: config.Config("TOPIC"),
 		Value: sarama.StringEncoder(message),
 	}
 
@@ -20,7 +21,6 @@ func PushUserToQueue(message []byte) error {
 		fmt.Println("Failed to send message to the queue")
 	}
 
-	fmt.Println("Ran")
 	fmt.Printf("Message is stored in topic(%s)/partition(%d)/offset(%d)\n", "user", partition, offset)
 	return nil
 }
