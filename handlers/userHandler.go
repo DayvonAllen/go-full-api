@@ -15,7 +15,17 @@ type UserHandler struct {
 }
 
 func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
-	users, err := uh.UserService.GetAllUsers()
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	users, err := uh.UserService.GetAllUsers(u.Id)
 
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

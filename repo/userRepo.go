@@ -6,7 +6,7 @@ import (
 )
 
 type UserRepo interface {
-	FindAll() (*[]domain.UserDto, error)
+	FindAll(primitive.ObjectID) (*[]domain.UserDto, error)
 	Create(*domain.User) error
 	FindByID(primitive.ObjectID) (*domain.UserDto, error)
 	FindByUsername(string) (*domain.UserDto, error)

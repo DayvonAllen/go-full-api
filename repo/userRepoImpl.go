@@ -4,6 +4,7 @@ import (
 	"context"
 	"example.com/app/database"
 	"example.com/app/domain"
+	"example.com/app/util"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,9 +21,10 @@ type UserRepoImpl struct {
 
 var dbConnection = database.GetInstance()
 
-func (u UserRepoImpl) FindAll() (*[]domain.UserDto, error) {
+func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) {
 	// Get all users
 	cur, err := dbConnection.Collection("users").Find(context.TODO(), bson.M{"profileIsViewable": true})
+	currentUser, err := u.FindByID(id)
 
 	if err != nil {
 		return nil, err
@@ -40,7 +42,9 @@ func (u UserRepoImpl) FindAll() (*[]domain.UserDto, error) {
 			return nil, err
 		}
 
-		u.userDtoList = append(u.userDtoList, elem)
+		if !util.Find(currentUser.BlockByList, elem.Id) && !util.Find(currentUser.BlockList, elem.Id) && currentUser.Id != elem.Id {
+			u.userDtoList = append(u.userDtoList, elem)
+		}
 	}
 
 	err = cur.Err()
@@ -253,9 +257,11 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 
 func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 
-	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.user)
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
-	if id == u.user.Id {
+	fmt.Println(id)
+	fmt.Println(u.userDto.Id)
+	if id == u.userDto.Id {
 		return fmt.Errorf("you can't block yourself")
 	}
 
@@ -267,14 +273,19 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 		return err
 	}
 
-	for _, foundId := range u.user.BlockByList {
+	//if util.Find(u.userDto.BlockList, id) {
+	//	return fmt.Errorf("already blocked")
+	//}
+
+	for _, foundId := range u.userDto.BlockByList {
 		if foundId == id {
 			return fmt.Errorf("already blocked")
 		}
 	}
 
+
 	filter := bson.D{{"_id", id}}
-	update := bson.M{"$push": bson.M{"blockList": u.user.Id}}
+	update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
 
 	_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),
 		filter, update)
@@ -283,7 +294,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 		return err
 	}
 
-	filter = bson.D{{"_id", u.user.Id}}
+	filter = bson.D{{"_id", u.userDto.Id}}
 	update = bson.M{"$push": bson.M{"blockByList": id}}
 
 	_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),

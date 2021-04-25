@@ -22,7 +22,7 @@ func SetupRoutes(app *fiber.App) {
 	auth.Get("/account/:code", ah.VerifyCode)
 
 	user := api.Group("/users")
-	user.Get("/", middleware.IsLoggedIn, uh.GetAllUsers)
+	user.Get("/", uh.GetAllUsers)
 	user.Get("/account", middleware.IsLoggedIn, uh.GetUserByID)
 	user.Get("/:username", middleware.IsLoggedIn, uh.GetUserByUsername)
 	user.Post("flag/:username", uh.UpdateFlagCount)

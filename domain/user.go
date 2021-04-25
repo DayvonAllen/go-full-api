@@ -65,6 +65,7 @@ type UpdateVerification struct {
 }
 
 type UserDto struct {
+	Id        primitive.ObjectID `bson:"_id" json:"-"`
 	Email string                 `json:"email"`
 	Username string              `json:"username"`
 	CurrentTagLine  string       `json:"currentTagLine"`
@@ -74,4 +75,6 @@ type UserDto struct {
 	UnlockedBadgesUrls  []string `json:"unlockedBadgesUrls"`
 	ProfileIsViewable  bool      `json:"profileIsViewable"`
 	AcceptMessages  bool         `json:"acceptMessages"`
+	BlockList []primitive.ObjectID	`bson:"blockList" json:"-"`
+	BlockByList []primitive.ObjectID `bson:"blockByList" json:"-"`
 }
