@@ -78,9 +78,9 @@ func (l Authentication) SignToken(token []byte) ([]byte, error) {
 
 func (l Authentication) VerifySignature(token, sig []byte) (bool, error) {
 	// sign message
-	s, _ := l.SignToken(token)
+	s, err := l.SignToken(token)
 	// compare it
-	return hmac.Equal(sig, s), nil
+	return hmac.Equal(sig, s), err
 }
 
 func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, bool, error)  {

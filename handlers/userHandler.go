@@ -22,7 +22,7 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	users, err := uh.UserService.GetAllUsers(u.Id)
@@ -41,7 +41,7 @@ func (uh *UserHandler) GetAllBlockedUsers(c *fiber.Ctx) error {
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	users, err := uh.UserService.GetAllBlockedUsers(u.Id)
@@ -82,7 +82,7 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	user, err := uh.UserService.GetUserByID(u.Id)
@@ -119,7 +119,7 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	userDto := new(domain.UpdateProfileVisibility)
@@ -150,7 +150,7 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	userDto := new(domain.UpdateMessageAcceptance)
@@ -181,7 +181,7 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	userDto := new(domain.UpdateCurrentBadge)
@@ -212,7 +212,7 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	userDto := new(domain.UpdateProfilePicture)
@@ -243,7 +243,7 @@ func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	userDto := new(domain.UpdateProfileBackgroundPicture)
@@ -274,7 +274,7 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	userDto := new(domain.UpdateCurrentTagline)
@@ -306,7 +306,7 @@ func (uh *UserHandler) UpdateFlagCount(c *fiber.Ctx) error {
 
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	flag := new(domain.Flag)
@@ -338,7 +338,7 @@ func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	err = uh.UserService.DeleteByID(u.Id)
@@ -361,7 +361,7 @@ func (uh *UserHandler) BlockUser(c *fiber.Ctx) error {
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	err = uh.UserService.BlockUser(u.Id, strings.ToLower(username))
@@ -383,7 +383,7 @@ func (uh *UserHandler) UnBlockUser(c *fiber.Ctx) error {
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
 	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
 	err = uh.UserService.UnBlockUser(u.Id, strings.ToLower(username))
