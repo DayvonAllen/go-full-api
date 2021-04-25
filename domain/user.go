@@ -77,4 +77,7 @@ type UserDto struct {
 	AcceptMessages  bool         `json:"acceptMessages"`
 	BlockList []primitive.ObjectID	`bson:"blockList" json:"-"`
 	BlockByList []primitive.ObjectID `bson:"blockByList" json:"-"`
+	TokenHash string             `bson:"tokenHash" json:"-"`
+	VerificationCode string      `bson:"verificationCode" json:"-"`
+	TokenExpiresAt int64         `bson:"tokenExpiresAt" json:"-"`
 }

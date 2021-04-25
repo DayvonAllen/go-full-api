@@ -18,16 +18,16 @@ type Authentication struct {
 }
 
 type LoginDetails struct {
-	Email string
-	Password string
+	Email string `bson:"email" json:"email"`
+	Password string `bson:"password" json:"password"`
 }
 
 type ResetPasswordQuery struct {
-	Email string
+	Email string `bson:"email" json:"email"`
 }
 
 type ResetPassword struct {
-	Password string
+	Password string `bson:"password" json:"password"`
 }
 
 type Claims struct {

@@ -89,7 +89,7 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -103,7 +103,7 @@ func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -134,7 +134,7 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -165,7 +165,7 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -196,7 +196,7 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -227,7 +227,7 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -258,7 +258,7 @@ func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -289,7 +289,7 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -324,7 +324,7 @@ func (uh *UserHandler) UpdateFlagCount(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -345,7 +345,7 @@ func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -368,7 +368,7 @@ func (uh *UserHandler) BlockUser(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
@@ -390,7 +390,7 @@ func (uh *UserHandler) UnBlockUser(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return c.Status(404).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}

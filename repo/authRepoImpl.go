@@ -95,10 +95,9 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 }
 
 func(a AuthRepoImpl) ResetPassword(token, password string) error {
-	var user domain.User
+	user := new(domain.User)
 	ur := new(UserRepoImpl)
 	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
-
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {

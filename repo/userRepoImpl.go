@@ -36,10 +36,10 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) 
 
 		// create a value into which the single document can be decoded
 		var elem domain.UserDto
-		err := cur.Decode(&elem)
+		err = cur.Decode(&elem)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error processing data")
 		}
 
 		if !util.Find(currentUser.BlockByList, elem.Id) && !util.Find(currentUser.BlockList, elem.Id) && currentUser.Id != elem.Id {
@@ -48,15 +48,16 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) 
 	}
 
 	err = cur.Err()
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error processing data")
 	}
 
 	// Close the cursor once finished
 	err = cur.Close(context.TODO())
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error processing data")
 	}
 
 	return &u.userDtoList, nil
@@ -75,7 +76,7 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.User
 	cur, err := dbConnection.Collection("users").Find(context.TODO(), query)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error processing data")
 	}
 
 	// Finding multiple documents returns a cursor
@@ -84,21 +85,27 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.User
 
 		// create a value into which the single document can be decoded
 		var elem domain.UserDto
-		err := cur.Decode(&elem)
+		err = cur.Decode(&elem)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error processing data")
 		}
+
 		u.userDtoList = append(u.userDtoList, elem)
 	}
 
 	err = cur.Err()
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error processing data")
 	}
 
 	// Close the cursor once finished
 	err = cur.Close(context.TODO())
+
+	if err != nil {
+		return nil, fmt.Errorf("error processing data")
+	}
 
 	return &u.userDtoList, nil
 }
@@ -113,15 +120,17 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 	})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error processing data")
 	}
 
 	if !cur.Next(context.TODO()) {
 		user.Id = primitive.NewObjectID()
 		_, err = dbConnection.Collection("users").InsertOne(context.TODO(), &user)
+
 		if err != nil {
-			return err
+			return fmt.Errorf("error processing data")
 		}
+
 		return nil
 	}
 
@@ -136,7 +145,7 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, err
 		}
-		return nil, err
+		return nil, fmt.Errorf("error processing data")
 	}
 
 	return &u.userDto, nil
@@ -150,7 +159,7 @@ func (u UserRepoImpl) FindByUsername(username string) (*domain.UserDto, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, err
 		}
-		return nil, err
+		return  nil, fmt.Errorf("error processing data")
 	}
 
 	return &u.userDto, nil
@@ -165,7 +174,10 @@ func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*dom
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, err
+		}
+		return  nil, fmt.Errorf("error processing data")
 	}
 
 	return &u.userDto, nil
@@ -270,7 +282,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 	})
 
 	if err != nil {
-		return err
+		return  fmt.Errorf("error processing data")
 	}
 
 	if !cur.Next(context.TODO()) {
