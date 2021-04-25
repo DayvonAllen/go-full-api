@@ -11,6 +11,7 @@ import (
 
 type UserService interface {
 	GetAllUsers(primitive.ObjectID) (*[]domain.UserDto, error)
+	GetAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
 	GetUserByUsername(string) (*domain.UserDto, error)
@@ -35,6 +36,14 @@ type DefaultUserService struct {
 
 func (s DefaultUserService) GetAllUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {
 	u, err := s.repo.FindAll(id)
+	if err != nil {
+		return nil, err
+	}
+	return  u, nil
+}
+
+func (s DefaultUserService) GetAllBlockedUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {
+	u, err := s.repo.FindAllBlockedUsers(id)
 	if err != nil {
 		return nil, err
 	}

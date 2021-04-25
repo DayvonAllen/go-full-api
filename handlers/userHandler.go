@@ -34,6 +34,25 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
 }
 
+func (uh *UserHandler) GetAllBlockedUsers(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	users, err := uh.UserService.GetAllBlockedUsers(u.Id)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
+}
+
 func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	createUserDto := new(domain.CreateUserDto)

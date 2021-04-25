@@ -62,6 +62,47 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) 
 	return &u.userDtoList, nil
 }
 
+func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {
+	currentUser, err := u.FindByID(id)
+
+	if err != nil {
+	 	return nil, err
+	 }
+
+	query := bson.M{"_id": bson.M{"$in": currentUser.BlockList}}
+
+	// Get all users
+	cur, err := dbConnection.Collection("users").Find(context.TODO(), query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Finding multiple documents returns a cursor
+	// Iterating through the cursor allows us to decode documents one at a time
+	for cur.Next(context.TODO()) {
+
+		// create a value into which the single document can be decoded
+		var elem domain.UserDto
+		err := cur.Decode(&elem)
+
+		if err != nil {
+			return nil, err
+		}
+		u.userDtoList = append(u.userDtoList, elem)
+	}
+
+	err = cur.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	// Close the cursor once finished
+	err = cur.Close(context.TODO())
+
+	return &u.userDtoList, nil
+}
+
 func (u UserRepoImpl) Create(user *domain.User) error {
 	cur, err := dbConnection.Collection("users").Find(context.TODO(), bson.M{
 		"$or": []interface{}{
