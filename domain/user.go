@@ -20,14 +20,14 @@ type User struct {
 	BlockByList []primitive.ObjectID `bson:"blockByList" json:"blockByList"`
 	FlagCount []Flag			 `bson:"flagCount" json:"flagCount"`
 	ProfileIsViewable  bool      `bson:"profileIsViewable" json:"profileIsViewable"`
-	IsLocked  bool               `bson:"isLocked" json:"isLocked"`
-	IsVerified  bool             `bson:"isVerified" json:"isVerified"`
+	IsLocked  bool               `bson:"isLocked" json:"-"`
+	IsVerified  bool             `bson:"isVerified" json:"-"`
 	AcceptMessages  bool         `bson:"acceptMessages" json:"acceptMessages"`
-	TokenHash string             `bson:"tokenHash" json:"tokenHash"`
-	VerificationCode string      `bson:"verificationCode" json:"verificationCode"`
-	TokenExpiresAt int64         `bson:"tokenExpiresAt" json:"tokenExpiresAt"`
-	CreatedAt time.Time          `bson:"createdAt" json:"createdAt,omitempty"`
-	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt,omitempty"`
+	TokenHash string             `bson:"tokenHash" json:"-"`
+	VerificationCode string      `bson:"verificationCode" json:"-"`
+	TokenExpiresAt int64         `bson:"tokenExpiresAt" json:"-"`
+	CreatedAt time.Time          `bson:"createdAt" json:"-"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type CreateUserDto struct {
@@ -38,30 +38,37 @@ type CreateUserDto struct {
 
 type UpdateProfileVisibility struct {
 	ProfileIsViewable  bool  `json:"profileIsViewable,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UpdateMessageAcceptance struct {
 	AcceptMessages  bool    `json:"acceptMessages,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UpdateCurrentBadge struct {
 	CurrentBadgeUrl  string `json:"currentBadgeUrl,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UpdateProfilePicture struct {
 	ProfilePictureUrl  string `json:"profilePictureUrl,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UpdateProfileBackgroundPicture struct {
 	ProfileBackgroundPictureUrl  string `json:"profileBackgroundPictureUrl,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UpdateCurrentTagline struct {
 	CurrentTagLine  string  `json:"currentTagLine,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UpdateVerification struct {
 	IsVerified  bool       `json:"isVerified,omitempty"`
+	UpdatedAt time.Time          `bson:"updatedAt" json:"-"`
 }
 
 type UserDto struct {

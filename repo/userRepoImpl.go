@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 type UserRepoImpl struct {
@@ -263,7 +264,7 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
-	update := bson.D{{"$set", bson.D{{"password", password}, {"tokenHash", ""}, {"tokenExpiresAt", 0}}}}
+	update := bson.D{{"$set", bson.D{{"password", password}, {"tokenHash", ""}, {"tokenExpiresAt", 0}, {"updatedAt", time.Now()}}}}
 
 	database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts)

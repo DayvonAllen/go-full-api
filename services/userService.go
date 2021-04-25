@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
+	"time"
 )
 
 type UserService interface {
@@ -90,6 +91,7 @@ func (s DefaultUserService) GetUserByUsername(username string) (*domain.UserDto,
 }
 
 func (s DefaultUserService) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateProfileVisibility(id, user)
 	if err != nil {
 		return err
@@ -98,6 +100,7 @@ func (s DefaultUserService) UpdateProfileVisibility(id primitive.ObjectID, user 
 }
 
 func (s DefaultUserService) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateMessageAcceptance(id, user)
 	if err != nil {
 		return err
@@ -106,6 +109,7 @@ func (s DefaultUserService) UpdateMessageAcceptance(id primitive.ObjectID, user 
 }
 
 func (s DefaultUserService) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateCurrentBadge(id, user)
 	if err != nil {
 		return err
@@ -114,6 +118,7 @@ func (s DefaultUserService) UpdateCurrentBadge(id primitive.ObjectID, user *doma
 }
 
 func (s DefaultUserService) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateProfilePicture(id, user)
 	if err != nil {
 		return err
@@ -121,6 +126,7 @@ func (s DefaultUserService) UpdateProfilePicture(id primitive.ObjectID, user *do
 	return nil
 }
 func (s DefaultUserService) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateProfileBackgroundPicture(id, user)
 	if err != nil {
 		return err
@@ -129,6 +135,7 @@ func (s DefaultUserService) UpdateProfileBackgroundPicture(id primitive.ObjectID
 }
 
 func (s DefaultUserService) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateCurrentTagline(id, user)
 	if err != nil {
 		return err
@@ -145,6 +152,7 @@ func (s DefaultUserService) UpdatePassword(id primitive.ObjectID, password strin
 }
 
 func (s DefaultUserService) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
+	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateVerification(id, user)
 	if err != nil {
 		return err
