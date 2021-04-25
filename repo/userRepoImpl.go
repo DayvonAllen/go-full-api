@@ -259,8 +259,6 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 
 	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
-	fmt.Println(id)
-	fmt.Println(u.userDto.Id)
 	if id == u.userDto.Id {
 		return fmt.Errorf("you can't block yourself")
 	}
@@ -273,16 +271,11 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 		return err
 	}
 
-	//if util.Find(u.userDto.BlockList, id) {
-	//	return fmt.Errorf("already blocked")
-	//}
-
 	for _, foundId := range u.userDto.BlockByList {
 		if foundId == id {
 			return fmt.Errorf("already blocked")
 		}
 	}
-
 
 	filter := bson.D{{"_id", id}}
 	update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
@@ -307,6 +300,60 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 	return  nil
 }
 
+func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error {
+
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+
+	if id == u.userDto.Id {
+		return fmt.Errorf("you can't block or unblock yourself")
+	}
+
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return fmt.Errorf("user not found")
+		}
+		return err
+	}
+
+	newBlockList, userIsBlocked := util.GenerateNewBlockList(id, u.userDto.BlockByList)
+
+	if !userIsBlocked {
+		return fmt.Errorf("this user is not blocked")
+	}
+
+	currentUser := new(domain.UserDto)
+
+	err = dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
+
+	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Id, currentUser.BlockList)
+
+	if !userIsBlocked {
+		return fmt.Errorf("this user is not blocked")
+	}
+
+	filter := bson.D{{"_id", id}}
+	update := bson.M{"$set": bson.M{"blockList": blockList}}
+
+	_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),
+		filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	filter = bson.D{{"_id", u.userDto.Id}}
+	update = bson.M{"$set": bson.M{"blockByList": newBlockList}}
+
+	_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),
+		filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	return  nil
+}
 
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID) error {
 	_, err := database.GetInstance().Collection("users").DeleteOne(context.TODO(), bson.D{{"_id", id}})

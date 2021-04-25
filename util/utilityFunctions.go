@@ -12,3 +12,16 @@ func Find(targetArr []primitive.ObjectID, id primitive.ObjectID) bool {
 	}
 	return false
 }
+
+func GenerateNewBlockList(targetID primitive.ObjectID, blockList []primitive.ObjectID) ([]primitive.ObjectID, bool) {
+	userIsBlocked := false
+	newBlockList := make([]primitive.ObjectID, 0, len(blockList))
+	for _, foundId := range blockList {
+		if foundId == targetID {
+			userIsBlocked = true
+			continue
+		}
+		newBlockList = append(newBlockList, foundId)
+	}
+	return newBlockList, userIsBlocked
+}

@@ -21,5 +21,6 @@ type UserRepo interface {
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
 	BlockUser(primitive.ObjectID, string) error
+	UnBlockUser(primitive.ObjectID, string) error
 	DeleteByID(primitive.ObjectID) error
 }
