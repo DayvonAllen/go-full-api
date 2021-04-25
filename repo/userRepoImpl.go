@@ -1,9 +1,12 @@
 package repo
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"example.com/app/database"
 	"example.com/app/domain"
+	"example.com/app/events"
 	"example.com/app/util"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
@@ -130,6 +133,16 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 
 		if err != nil {
 			return fmt.Errorf("error processing data")
+		}
+
+		// turn user struct into a byte array
+		userBytes := new(bytes.Buffer)
+		err = json.NewEncoder(userBytes).Encode(&user)
+
+		err = events.PushUserToQueue(userBytes.Bytes())
+
+		if err != nil {
+			fmt.Println("Failed to publish new user")
 		}
 
 		return nil

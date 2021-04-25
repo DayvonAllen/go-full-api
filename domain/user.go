@@ -9,7 +9,7 @@ type User struct {
 	Id        primitive.ObjectID `bson:"_id" json:"id,omitempty"`
 	Username  string             `bson:"username" json:"username"`
 	Email     string             `bson:"email" json:"email"`
-	Password  string             `bson:"password" json:"password"`
+	Password  string             `bson:"password" json:"-"`
 	CurrentTagLine  string       `bson:"currentTagLine" json:"CurrentTagLine"`
 	UnlockedTagLine  []string    `bson:"unlockedTagLine" json:"unlockedTagLine"`
 	ProfilePictureUrl  string    `bson:"profilePictureUrl" json:"profilePictureUrl"`
@@ -21,7 +21,7 @@ type User struct {
 	FlagCount []Flag			 `bson:"flagCount" json:"flagCount"`
 	ProfileIsViewable  bool      `bson:"profileIsViewable" json:"profileIsViewable"`
 	IsLocked  bool               `bson:"isLocked" json:"-"`
-	IsVerified  bool             `bson:"isVerified" json:"-"`
+	IsVerified  bool             `bson:"isVerified" json:"isVerified"`
 	AcceptMessages  bool         `bson:"acceptMessages" json:"acceptMessages"`
 	TokenHash string             `bson:"tokenHash" json:"-"`
 	VerificationCode string      `bson:"verificationCode" json:"-"`
