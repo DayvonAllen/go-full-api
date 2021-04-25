@@ -33,5 +33,6 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/profile-photo", uh.UpdateProfilePicture)
 	user.Put("/background-photo", uh.UpdateProfileBackgroundPicture)
 	user.Put("/current-tagline", uh.UpdateCurrentTagline)
+	user.Put("/block/:username", uh.BlockUser)
 	user.Delete("/delete", uh.DeleteByID)
 }

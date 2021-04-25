@@ -2,6 +2,7 @@ package util
 
 import (
 	"example.com/app/domain"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
 )
@@ -16,6 +17,8 @@ func CreateUser(createUserDto *domain.CreateUserDto) *domain.User {
 	user.IsLocked = false
 	user.ProfileIsViewable = true
 	user.AcceptMessages = true
+	user.BlockList = []primitive.ObjectID{}
+	user.BlockByList = []primitive.ObjectID{}
 	user.FlagCount = []domain.Flag{}
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()

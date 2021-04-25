@@ -23,6 +23,7 @@ type UserService interface {
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
+	BlockUser(primitive.ObjectID, string) error
 	DeleteByID(primitive.ObjectID) error
 }
 
@@ -151,6 +152,14 @@ func (s DefaultUserService) UpdateFlagCount(flag *domain.Flag) error {
 
 func (s DefaultUserService) DeleteByID(id primitive.ObjectID) error {
 	err := s.repo.DeleteByID(id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s DefaultUserService) BlockUser(id primitive.ObjectID, username string) error {
+	err := s.repo.BlockUser(id, username)
 	if err != nil {
 		return err
 	}

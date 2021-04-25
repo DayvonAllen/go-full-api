@@ -232,10 +232,14 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		flag.Id = primitive.NewObjectID()
 		_, err = dbConnection.Collection("flags").InsertOne(context.TODO(), &flag)
 
+		if err != nil {
+			return err
+		}
+
 		filter := bson.D{{"username", flag.FlaggedUsername}}
 		update := bson.M{"$push": bson.M{"flagCount":flag}}
 
-		_, err := database.GetInstance().Collection("users").UpdateOne(context.TODO(),
+		_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),
 			filter, update)
 		if err != nil {
 			return err
@@ -245,6 +249,51 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 	}
 
 	return  fmt.Errorf("you've already flagged this user")
+}
+
+func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
+
+	err := dbConnection.Collection("users").FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.user)
+
+	if id == u.user.Id {
+		return fmt.Errorf("you can't block yourself")
+	}
+
+	if err != nil {
+		// ErrNoDocuments means that the filter did not match any documents in the collection
+		if err == mongo.ErrNoDocuments {
+			return fmt.Errorf("user not found")
+		}
+		return err
+	}
+
+	for _, foundId := range u.user.BlockByList {
+		if foundId == id {
+			return fmt.Errorf("already blocked")
+		}
+	}
+
+	filter := bson.D{{"_id", id}}
+	update := bson.M{"$push": bson.M{"blockList": u.user.Id}}
+
+	_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),
+		filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	filter = bson.D{{"_id", u.user.Id}}
+	update = bson.M{"$push": bson.M{"blockByList": id}}
+
+	_, err = database.GetInstance().Collection("users").UpdateOne(context.TODO(),
+		filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	return  nil
 }
 
 

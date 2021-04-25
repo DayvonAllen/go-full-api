@@ -16,8 +16,8 @@ type User struct {
 	ProfileBackgroundPictureUrl  string  `bson:"profileBackgroundPictureUrl" json:"profileBackgroundPictureUrl"`
 	CurrentBadgeUrl  string      `bson:"currentBadgeUrl" json:"currentBadgeUrl"`
 	UnlockedBadgesUrls  []string `bson:"unlockedBadgesUrls" json:"unlockedBadgesUrls"`
-	BlockList []string			 `bson:"blockList" json:"blockList"`
-	BlockByList []string		 `bson:"blockByList" json:"blockByList"`
+	BlockList []primitive.ObjectID	`bson:"blockList" json:"blockList"`
+	BlockByList []primitive.ObjectID `bson:"blockByList" json:"blockByList"`
 	FlagCount []Flag			 `bson:"flagCount" json:"flagCount"`
 	ProfileIsViewable  bool      `bson:"profileIsViewable" json:"profileIsViewable"`
 	IsLocked  bool               `bson:"isLocked" json:"isLocked"`
