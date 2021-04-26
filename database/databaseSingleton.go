@@ -42,7 +42,7 @@ func connectToDB() error {
 	if err != nil { return err }
 
 	// create database
-	db := client.Database("auth-app")
+	db := client.Database("user-service")
 
 	// create collection
 	userCollection := db.Collection("users")
