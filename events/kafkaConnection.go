@@ -34,7 +34,7 @@ func connectProducer() (sarama.SyncProducer,error) {
 	// NewSyncProducer creates a new SyncProducer using the given broker addresses and configuration.
 	conn, err := sarama.NewSyncProducer(brokersUrl, config)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	kafkaConnection = &Connection{conn}

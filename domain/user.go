@@ -82,6 +82,7 @@ type UserDto struct {
 	UnlockedBadgesUrls  []string `json:"unlockedBadgesUrls"`
 	ProfileIsViewable  bool      `json:"profileIsViewable"`
 	AcceptMessages  bool         `json:"acceptMessages"`
+	IsVerified  bool             `bson:"isVerified" json:"-"`
 	BlockList []primitive.ObjectID	`bson:"blockList" json:"-"`
 	BlockByList []primitive.ObjectID `bson:"blockByList" json:"-"`
 	TokenHash string             `bson:"tokenHash" json:"-"`

@@ -2,6 +2,7 @@ package domain
 
 func UserMapper(user *User) *UserDto {
 	userDto := new(UserDto)
+	userDto.Id = user.Id
 	userDto.Email = user.Email
 	userDto.ProfilePictureUrl = user.ProfilePictureUrl
 	userDto.CurrentTagLine = user.CurrentTagLine
@@ -12,4 +13,20 @@ func UserMapper(user *User) *UserDto {
 	userDto.AcceptMessages = user.AcceptMessages
 
 	return userDto
+}
+
+func UserDtoMapper(dto UserDto) *User {
+	user := new(User)
+	user.Id = dto.Id
+	user.Email = dto.Email
+	user.ProfilePictureUrl = dto.ProfilePictureUrl
+	user.CurrentTagLine = dto.CurrentTagLine
+	user.UnlockedTagLine = dto.UnlockedTagLine
+	user.CurrentBadgeUrl = dto.CurrentBadgeUrl
+	user.ProfileIsViewable = dto.ProfileIsViewable
+	user.UnlockedBadgesUrls = dto.UnlockedBadgesUrls
+	user.AcceptMessages = dto.AcceptMessages
+	user.IsVerified = dto.IsVerified
+
+	return user
 }

@@ -3,8 +3,6 @@ package main
 import (
 	"example.com/app/database"
 	"example.com/app/router"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log"
 )
 
@@ -14,11 +12,8 @@ func init() {
 }
 
 func main() {
-	app := fiber.New()
-	app.Use(cors.New(cors.Config{
-		ExposeHeaders: "Authorization",
-	}))
-
-	router.SetupRoutes(app)
+	app := router.Setup()
 	log.Fatal(app.Listen(":8080"))
 }
+
+

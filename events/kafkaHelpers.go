@@ -1,9 +1,13 @@
 package events
 
 import (
+	"bytes"
+	"encoding/json"
 	"example.com/app/config"
+	"example.com/app/domain"
 	"fmt"
 	"github.com/Shopify/sarama"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func PushUserToQueue(message []byte) error {
@@ -18,6 +22,10 @@ func PushUserToQueue(message []byte) error {
 
 	partition, offset, err := producer.SendMessage(msg)
 	if err != nil {
+		err = producer.Close()
+		if err != nil {
+			panic(err)
+		}
 		fmt.Println("Failed to send message to the queue")
 	}
 
@@ -25,3 +33,39 @@ func PushUserToQueue(message []byte) error {
 	return nil
 }
 
+func SendKafkaMessage(user *domain.User, eventType int) error {
+	um := new(domain.UserMessage)
+	um.User = *user
+
+	// user created/updated event
+	um.MessageType = eventType
+
+	// turn user struct into a byte array
+	userBytes := new(bytes.Buffer)
+	err := json.NewEncoder(userBytes).Encode(&um)
+
+	err = PushUserToQueue(userBytes.Bytes())
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HandleKafkaMessage(err error, user *domain.User, messageType int) error {
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return err
+		}
+		return fmt.Errorf("error processing data")
+	}
+
+	err = SendKafkaMessage(user, messageType)
+
+	if err != nil {
+		fmt.Println("Failed to publish new user")
+	}
+
+	return nil
+}

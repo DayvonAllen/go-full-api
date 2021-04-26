@@ -6,13 +6,16 @@ import (
 	"example.com/app/repo"
 	"example.com/app/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 
 func SetupRoutes(app *fiber.App) {
 	uh := handlers.UserHandler{UserService: services.NewUserService(repo.NewUserRepoImpl())}
 	ah := handlers.AuthHandler{AuthService: services.NewAuthService(repo.NewAuthRepoImpl())}
+	app.Use(recover.New())
 	api := app.Group("", logger.New())
 
 	auth := api.Group("/auth")
@@ -37,4 +40,14 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/block/:username", uh.BlockUser)
 	user.Put("/unblock/:username", uh.UnBlockUser)
 	user.Delete("/delete", uh.DeleteByID)
+}
+
+func Setup() *fiber.App {
+	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		ExposeHeaders: "Authorization",
+	}))
+
+	SetupRoutes(app)
+	return app
 }
