@@ -192,6 +192,12 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
+	if err != nil {
+		return err
+	}
+
+	u.userDto.ProfileIsViewable = user.ProfileIsViewable
+
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
 	err = events.HandleKafkaMessage(err, mappedUser, 200)
@@ -210,6 +216,12 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
+
+	if err != nil {
+		return err
+	}
+
+	u.userDto.AcceptMessages = user.AcceptMessages
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
@@ -230,6 +242,12 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
+	if err != nil {
+		return err
+	}
+
+	u.userDto.CurrentBadgeUrl = user.CurrentBadgeUrl
+
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
 	err = events.HandleKafkaMessage(err, mappedUser, 200)
@@ -248,6 +266,12 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
+
+	if err != nil {
+		return err
+	}
+
+	u.userDto.ProfilePictureUrl = user.ProfilePictureUrl
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
@@ -268,6 +292,12 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
+	if err != nil {
+		return err
+	}
+
+	u.userDto.ProfileBackgroundPictureUrl = user.ProfileBackgroundPictureUrl
+
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
 	err = events.HandleKafkaMessage(err, mappedUser, 200)
@@ -286,6 +316,12 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
+
+	if err != nil {
+		return err
+	}
+
+	u.userDto.CurrentTagLine = user.CurrentTagLine
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
@@ -306,6 +342,12 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
+	if err != nil {
+		return err
+	}
+
+	u.userDto.IsVerified = user.IsVerified
+
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
 	err = events.HandleKafkaMessage(err, mappedUser, 200)
@@ -322,16 +364,8 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"password", password}, {"tokenHash", ""}, {"tokenExpiresAt", 0}, {"updatedAt", time.Now()}}}}
 
-	err := database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
-		filter, update, opts).Decode(&u.userDto)
-
-	mappedUser := domain.UserDtoMapper(u.userDto)
-
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
-
-	if err != nil {
-		return err
-	}
+	database.GetInstance().Collection("users").FindOneAndUpdate(context.TODO(),
+		filter, update, opts)
 
 	return  nil
 }

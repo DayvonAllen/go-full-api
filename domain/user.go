@@ -6,7 +6,7 @@ import (
 )
 
 type User struct {
-	Id        primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+	Id        primitive.ObjectID `bson:"_id" json:"id"`
 	Username  string             `bson:"username" json:"username"`
 	Email     string             `bson:"email" json:"email"`
 	Password  string             `bson:"password" json:"-"`
@@ -72,12 +72,13 @@ type UpdateVerification struct {
 }
 
 type UserDto struct {
-	Id        primitive.ObjectID `bson:"_id" json:"-"`
+	Id        primitive.ObjectID `bson:"_id" json:"_"`
 	Email string                 `json:"email"`
 	Username string              `json:"username"`
 	CurrentTagLine  string       `json:"currentTagLine"`
 	UnlockedTagLine  []string    `json:"unlockedTagLine"`
 	ProfilePictureUrl  string    `json:"profilePictureUrl"`
+	ProfileBackgroundPictureUrl  string  `json:"profileBackgroundPictureUrl"`
 	CurrentBadgeUrl  string      `json:"currentBadgeUrl"`
 	UnlockedBadgesUrls  []string `json:"unlockedBadgesUrls"`
 	ProfileIsViewable  bool      `json:"profileIsViewable"`
