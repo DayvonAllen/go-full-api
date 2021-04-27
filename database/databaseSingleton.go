@@ -11,8 +11,8 @@ import (
 
 type Connection struct {
 	*mongo.Client
-	userCollection *mongo.Collection
-	flagCollection *mongo.Collection
+	UserCollection *mongo.Collection
+	FlagCollection *mongo.Collection
 	*mongo.Database
 }
 

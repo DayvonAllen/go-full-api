@@ -72,7 +72,7 @@ type UpdateVerification struct {
 }
 
 type UserDto struct {
-	Id        primitive.ObjectID `bson:"_id" json:"_"`
+	Id        primitive.ObjectID `bson:"_id" json:"-"`
 	Email string                 `json:"email"`
 	Username string              `json:"username"`
 	CurrentTagLine  string       `json:"currentTagLine"`

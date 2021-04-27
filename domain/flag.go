@@ -5,8 +5,8 @@ import (
 )
 
 type Flag struct {
-	Id        primitive.ObjectID `bson:"_id" json:"id,omitempty"`
-	FlaggerID  primitive.ObjectID `bson:"flaggerID" json:"flaggerID,omitempty"`
-	FlaggedUsername string `bson:"flaggedUsername" json:"flaggedUsername,omitempty"`
+	Id        primitive.ObjectID `bson:"_id" json:"-"`
+	FlaggerID  primitive.ObjectID `bson:"flaggerID" json:"-"`
+	FlaggedUsername string `bson:"flaggedUsername" json:"-"`
 	Reason  string             `bson:"reason" json:"reason"`
 }
