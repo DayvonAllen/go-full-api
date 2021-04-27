@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"example.com/app/config"
+	"example.com/app/database"
 	"example.com/app/domain"
 	"fmt"
 	"github.com/gofiber/fiber/v2/utils"
@@ -23,7 +24,7 @@ func(a AuthRepoImpl) Login(email, password string) (*domain.UserDto, string, err
 	var login domain.Authentication
 	var user domain.User
 	opts := options.FindOne()
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"email",
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"email",
 		strings.ToLower(email)}},opts).Decode(&user)
 
 	if err != nil {
@@ -49,7 +50,7 @@ func(a AuthRepoImpl) Login(email, password string) (*domain.UserDto, string, err
 
 func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 	var user domain.User
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -97,7 +98,7 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 func(a AuthRepoImpl) ResetPassword(token, password string) error {
 	user := new(domain.User)
 	ur := new(UserRepoImpl)
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
@@ -123,7 +124,7 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 func (a AuthRepoImpl) VerifyCode(code string) error{
 	var user domain.User
 	ur := new(UserRepoImpl)
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
 
 	if user.IsVerified {
 		return fmt.Errorf("user email already verified")

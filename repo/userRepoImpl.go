@@ -21,11 +21,9 @@ type UserRepoImpl struct {
 	userDtoList []domain.UserDto
 }
 
-var dbConnection = database.GetInstance()
-
 func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) {
 	// Get all users
-	cur, err := dbConnection.UserCollection.Find(context.TODO(), bson.M{"profileIsViewable": true})
+	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), bson.M{"profileIsViewable": true})
 	currentUser, err := u.FindByID(id)
 
 	if err != nil {
@@ -75,7 +73,7 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.User
 	query := bson.M{"_id": bson.M{"$in": currentUser.BlockList}}
 
 	// Get all users
-	cur, err := dbConnection.UserCollection.Find(context.TODO(), query)
+	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), query)
 
 	if err != nil {
 		return nil, fmt.Errorf("error processing data")
@@ -113,7 +111,7 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.User
 }
 
 func (u UserRepoImpl) Create(user *domain.User) error {
-	cur, err := dbConnection.UserCollection.Find(context.TODO(), bson.M{
+	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), bson.M{
 		"$or": []interface{}{
 			bson.M{"email": user.Email},
 			bson.M{"username": user.Username},
@@ -127,7 +125,7 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 
 	if !cur.Next(context.TODO()) {
 		user.Id = primitive.NewObjectID()
-		_, err = dbConnection.UserCollection.InsertOne(context.TODO(), &user)
+		_, err = database.GetInstance().UserCollection.InsertOne(context.TODO(), &user)
 
 		if err != nil {
 			return fmt.Errorf("error processing data")
@@ -146,7 +144,7 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 }
 
 func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -160,7 +158,7 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
 }
 
 func (u UserRepoImpl) FindByUsername(username string) (*domain.UserDto, error) {
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -372,7 +370,7 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 
 func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 
-	cur, err := dbConnection.FlagCollection.Find(context.TODO(), bson.M{
+	cur, err := database.GetInstance().FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
 			bson.M{"flaggerID": flag.FlaggerID},
 			bson.M{"flaggedUsername": flag.FlaggedUsername},
@@ -386,7 +384,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 
 	if !cur.Next(context.TODO()) {
 		flag.Id = primitive.NewObjectID()
-		_, err = dbConnection.FlagCollection.InsertOne(context.TODO(), &flag)
+		_, err = database.GetInstance().FlagCollection.InsertOne(context.TODO(), &flag)
 
 		if err != nil {
 			return err
@@ -409,7 +407,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 
 func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
 		return fmt.Errorf("you can't block yourself")
@@ -454,7 +452,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 
 func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error {
 
-	err := dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
 		return fmt.Errorf("you can't block or unblock yourself")
@@ -476,7 +474,7 @@ func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error 
 
 	currentUser := new(domain.UserDto)
 
-	err = dbConnection.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
+	err = database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
 
 	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Id, currentUser.BlockList)
 
