@@ -4,7 +4,6 @@ import (
 	"example.com/app/domain"
 	"example.com/app/repo"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
 )
 
 type AuthService interface {
@@ -18,8 +17,8 @@ type DefaultAuthService struct {
 	repo repo.AuthRepo
 }
 
-func (a DefaultAuthService) Login(email, password string) (*domain.UserDto, string, error) {
-	u, token, err := a.repo.Login(strings.ToLower(email), password)
+func (a DefaultAuthService) Login(username, password string) (*domain.UserDto, string, error) {
+	u, token, err := a.repo.Login(username, password)
 	if err != nil {
 		return nil, "", err
 	}
@@ -27,7 +26,7 @@ func (a DefaultAuthService) Login(email, password string) (*domain.UserDto, stri
 }
 
 func (a DefaultAuthService) ResetPasswordQuery(email string) error {
-	err := a.repo.ResetPasswordQuery(strings.ToLower(email))
+	err := a.repo.ResetPasswordQuery(email)
 	if err != nil {
 		return err
 	}

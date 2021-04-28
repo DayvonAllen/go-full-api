@@ -4,6 +4,7 @@ func UserMapper(user *User) *UserDto {
 	userDto := new(UserDto)
 	userDto.Id = user.Id
 	userDto.Email = user.Email
+	userDto.Username = user.Username
 	userDto.ProfilePictureUrl = user.ProfilePictureUrl
 	userDto.CurrentTagLine = user.CurrentTagLine
 	userDto.UnlockedTagLine = user.UnlockedTagLine
@@ -19,6 +20,7 @@ func UserDtoMapper(dto UserDto) *User {
 	user := new(User)
 	user.Id = dto.Id
 	user.Email = dto.Email
+	user.Username = dto.Username
 	user.ProfilePictureUrl = dto.ProfilePictureUrl
 	user.CurrentTagLine = dto.CurrentTagLine
 	user.UnlockedTagLine = dto.UnlockedTagLine

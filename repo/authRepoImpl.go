@@ -5,6 +5,7 @@ import (
 	"example.com/app/config"
 	"example.com/app/database"
 	"example.com/app/domain"
+	"example.com/app/util"
 	"fmt"
 	"github.com/gofiber/fiber/v2/utils"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,18 +21,29 @@ type AuthRepoImpl struct {
 	*domain.User
 }
 
-func(a AuthRepoImpl) Login(email, password string) (*domain.UserDto, string, error) {
+func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, error) {
 	var login domain.Authentication
 	var user domain.User
-	opts := options.FindOne()
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"email",
-		strings.ToLower(email)}},opts).Decode(&user)
 
-	if err != nil {
-		return nil, "", err
+	if util.IsEmail(username) {
+		opts := options.FindOne()
+		err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"email",
+			strings.ToLower(username)}},opts).Decode(&user)
+
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		opts := options.FindOne()
+		err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username",
+			strings.ToLower(username)}},opts).Decode(&user)
+
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
 		return nil, "", err

@@ -23,7 +23,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 
-	user, token, err := ah.AuthService.Login(details.Email, details.Password)
+	user, token, err := ah.AuthService.Login(details.Username, details.Password)
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {

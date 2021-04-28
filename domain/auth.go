@@ -14,11 +14,12 @@ import (
 
 type Authentication struct {
 	Id primitive.ObjectID
-	Email string
+	Username string `bson:"username" json:"username"`
 }
 
 type LoginDetails struct {
 	Email string `bson:"email" json:"email"`
+	Username string `bson:"username" json:"username"`
 	Password string `bson:"password" json:"password"`
 }
 
@@ -32,8 +33,8 @@ type ResetPassword struct {
 
 type Claims struct {
 	jwt.StandardClaims
-	Id primitive.ObjectID
-	Email string
+	Id       primitive.ObjectID
+	Username string
 }
 
 var k = config.Config("SECRET")
@@ -49,8 +50,8 @@ func (l Authentication) GenerateJWT(msg User) (string, error){
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Duration(e) * time.Minute).Unix(),
 		},
-		Id: msg.Id,
-		Email: msg.Email,
+		Id:       msg.Id,
+		Username: msg.Username,
 	}
 	// always better to use a pointer with JSON
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
@@ -124,7 +125,7 @@ func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, bool, err
 		claims := token.Claims.(*Claims)
 
 		l.Id = claims.Id
-		l.Email = claims.Email
+		l.Username = claims.Username
 		return &l, true, nil
 	}
 
