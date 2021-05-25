@@ -31,7 +31,7 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 			strings.ToLower(username)}},opts).Decode(&user)
 
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("error finding by email")
 		}
 	} else {
 		opts := options.FindOne()
@@ -39,20 +39,20 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 			strings.ToLower(username)}},opts).Decode(&user)
 
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("error finding by username")
 		}
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("error comparing password")
 	}
 
 	token, err := login.GenerateJWT(user)
 
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("error generating token")
 	}
 
 	userDto := domain.UserMapper(&user)

@@ -19,7 +19,7 @@ type Authentication struct {
 
 type LoginDetails struct {
 	Email string `bson:"email" json:"email"`
-	Username string `bson:"username" json:"username"`
+	//Username string `bson:"username" json:"username"`
 	Password string `bson:"password" json:"password"`
 }
 
