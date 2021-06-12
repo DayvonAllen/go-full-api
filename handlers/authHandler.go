@@ -23,13 +23,13 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 
-	user, token, err := ah.AuthService.Login(details.Username, details.Password)
+	user, token, err := ah.AuthService.Login(details.Email, details.Password)
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("processing error")})
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
 	signedToken := make([]byte, 0, 100)
