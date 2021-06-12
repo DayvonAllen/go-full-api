@@ -20,46 +20,46 @@
 
 ## Routes
 - Get All users:
-  - `http://localhost:8080/users`(protected, needs token)
+  - `GET:http://localhost:8080/users`(protected, needs token)
 - Login:
-  - `http://localhost:8080/auth/login`
+  - `POST:http://localhost:8080/auth/login`
   - JSON: `{
     "email": "jdoedddd25455@gmail.com",
     "password": "password"
 }`
 - Register:
-  - `http://localhost:8080/users`
+  - `POST:http://localhost:8080/users`
   - JSON: `{
         "username": "jdoe1744",
         "email": "jdoedddd25455@gmail.com",
         "password": "password"
 }`
 - Reset Password Query:
-  - `http://localhost:8080/auth/reset`
+  - `POST:http://localhost:8080/auth/reset`
   - JSON: `{
     "email": "jdoedddd25455@gmail.com"
 }`
 - Reset Password:
-  - `http://localhost:8080/auth/reset/<token should be in the console of the go app, place here>`
+  - `PUT:http://localhost:8080/auth/reset/<token should be in the console of the go app, place here>`
 - Verify Account:
-  - `http://localhost:8080/auth/account/<Token is in MongoDB user collection, place here>`
+  - `PUT:http://localhost:8080/auth/account/<Token is in MongoDB user collection, place here>`
 - Get User's account: (protected, needs token)
-  - `http://localhost:8080/users/account`
+  - `GET:http://localhost:8080/users/account`
 - Flag user: (protected, needs token):
-  - `http://localhost:8080/users/flag/<username of person to flag>`
+  - `POST:http://localhost:8080/users/flag/<username of person to flag>`
 - Update profile visibility: (protected, needs token)
-  - `http://localhost:8080/users/profile-visibility`
+  - `PUT:http://localhost:8080/users/profile-visibility`
   - JSON: `{
     "profileIsViewable": false
 }`
 - Update Message Acceptance(whether you want to receive messages or not): (protected, needs token)
-  - `http://localhost:8080/users/message-acceptance`
+  - `PUT:http://localhost:8080/users/message-acceptance`
   - JSON: `{
     "acceptMessages": false
 }`
 - Block user: (protected, needs token)
-  - `http://localhost:8080/users/block/<username of user you want to block>`
+  - `PUT:http://localhost:8080/users/block/<username of user you want to block>`
 - Unblock user: (protected, needs token)
-  - `http://localhost:8080/users/unblock/<username of user you want to unblock>`
+  - `PUT:http://localhost:8080/users/unblock/<username of user you want to unblock>`
 - Delete current user account: (protected, needs token)
-  - `http://localhost:8080/users/delete`
+  - `DELETE:http://localhost:8080/users/delete`
