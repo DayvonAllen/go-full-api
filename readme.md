@@ -59,6 +59,8 @@
 }`
 - Block user: (protected, needs token)
   - `PUT:http://localhost:8080/users/block/<username of user you want to block>`
+- Get all blocked users: (protected, needs token)   
+  - `GET:http://localhost:8080/users/blocked`
 - Unblock user: (protected, needs token)
   - `PUT:http://localhost:8080/users/unblock/<username of user you want to unblock>`
 - Delete current user account: (protected, needs token)
