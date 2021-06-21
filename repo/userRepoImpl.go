@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 	"time"
 )
 
@@ -22,43 +23,32 @@ type UserRepoImpl struct {
 }
 
 func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) {
-	// Get all users
-	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), bson.M{"profileIsViewable": true})
 	currentUser, err := u.FindByID(id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// Finding multiple documents returns a cursor
-	// Iterating through the cursor allows us to decode documents one at a time
-	for cur.Next(context.TODO()) {
-
-		// create a value into which the single document can be decoded
-		var elem domain.UserDto
-		err = cur.Decode(&elem)
-
-		if err != nil {
-			return nil, fmt.Errorf("error processing data")
-		}
-
-		if !util.Find(currentUser.BlockByList, elem.Id) && !util.Find(currentUser.BlockList, elem.Id) && currentUser.Id != elem.Id {
-			u.userDtoList = append(u.userDtoList, elem)
-		}
-	}
-
-	err = cur.Err()
+	// Get all users
+	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), bson.M{
+		"profileIsViewable": true,
+		"$and": []interface{}{
+			bson.M{"_id": bson.M{ "$ne": id }},
+			bson.M{"_id": bson.M{"$nin": currentUser.BlockByList}},
+			bson.M{"_id": bson.M{"$nin": currentUser.BlockList}},
+		},
+	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error processing data")
+		return nil, err
 	}
 
-	// Close the cursor once finished
-	err = cur.Close(context.TODO())
-
-	if err != nil {
-		return nil, fmt.Errorf("error processing data")
+	var results []domain.UserDto
+	if err = cur.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
 	}
+
+	u.userDtoList = results
 
 	return &u.userDtoList, nil
 }
@@ -79,33 +69,12 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.User
 		return nil, fmt.Errorf("error processing data")
 	}
 
-	// Finding multiple documents returns a cursor
-	// Iterating through the cursor allows us to decode documents one at a time
-	for cur.Next(context.TODO()) {
-
-		// create a value into which the single document can be decoded
-		var elem domain.UserDto
-		err = cur.Decode(&elem)
-
-		if err != nil {
-			return nil, fmt.Errorf("error processing data")
-		}
-
-		u.userDtoList = append(u.userDtoList, elem)
+	var results []domain.UserDto
+	if err = cur.All(context.TODO(), &results); err != nil {
+		log.Fatal(err)
 	}
 
-	err = cur.Err()
-
-	if err != nil {
-		return nil, fmt.Errorf("error processing data")
-	}
-
-	// Close the cursor once finished
-	err = cur.Close(context.TODO())
-
-	if err != nil {
-		return nil, fmt.Errorf("error processing data")
-	}
+	u.userDtoList = results
 
 	return &u.userDtoList, nil
 }
@@ -130,11 +99,14 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 			return fmt.Errorf("error processing data")
 		}
 
-		err = events.SendKafkaMessage(user, 201)
+		go func() {
+			err := events.SendKafkaMessage(user, 201)
+			if err != nil {
+				fmt.Println("Error publishing...")
+				return
+			}
+		}()
 
-		if err != nil {
-			fmt.Println("Failed to publish new user")
-		}
 
 		return nil
 	}
@@ -197,7 +169,13 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
@@ -222,7 +200,12 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
@@ -247,7 +230,12 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
@@ -272,7 +260,12 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
@@ -297,7 +290,12 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
@@ -322,7 +320,12 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
@@ -347,7 +350,12 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 
 	mappedUser := domain.UserDtoMapper(u.userDto)
 
-	err = events.HandleKafkaMessage(err, mappedUser, 200)
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
 
 	if err != nil {
 		return err
