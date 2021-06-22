@@ -18,7 +18,7 @@ type User struct {
 	UnlockedBadgesUrls  []string `bson:"unlockedBadgesUrls" json:"unlockedBadgesUrls"`
 	BlockList []primitive.ObjectID	`bson:"blockList" json:"blockList"`
 	BlockByList []primitive.ObjectID `bson:"blockByList" json:"blockByList"`
-	FlagCount []Flag			 `bson:"flagCount" json:"flagCount"`
+	FlagCount []primitive.ObjectID			 `bson:"flagCount" json:"flagCount"`
 	ProfileIsViewable  bool      `bson:"profileIsViewable" json:"profileIsViewable"`
 	IsLocked  bool               `bson:"isLocked" json:"-"`
 	IsVerified  bool             `bson:"isVerified" json:"isVerified"`

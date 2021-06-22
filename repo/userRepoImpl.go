@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"log"
 	"time"
 )
@@ -122,7 +124,7 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
 		if err == mongo.ErrNoDocuments {
 			return nil, err
 		}
-		return nil, fmt.Errorf("error processing data")
+		return nil, fmt.Errorf("error with the database")
 	}
 
 	return &u.userDto, nil
@@ -376,7 +378,6 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 }
 
 func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-
 	cur, err := database.GetInstance().FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
 			bson.M{"flaggerID": flag.FlaggerID},
@@ -398,7 +399,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		}
 
 		filter := bson.D{{"username", flag.FlaggedUsername}}
-		update := bson.M{"$push": bson.M{"flagCount":flag}}
+		update := bson.M{"$push": bson.M{"flagCount": flag.Id}}
 
 		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
 			filter, update)
@@ -434,24 +435,49 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 		}
 	}
 
-	filter := bson.D{{"_id", id}}
-	update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
+	// sets mongo's read and write concerns
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
 
-	_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
-		filter, update)
+	// set up for a transaction
+	session, err := database.GetInstance().StartSession()
 
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	filter = bson.D{{"_id", u.userDto.Id}}
-	update = bson.M{"$push": bson.M{"blockByList": id}}
+	defer session.EndSession(context.Background())
 
-	_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
-		filter, update)
+	// execute this code in a logical transaction
+	callback := func(sessionContext mongo.SessionContext) (interface{}, error) {
+
+		filter := bson.D{{"_id", id}}
+		update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
+
+		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+			filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		filter = bson.D{{"_id", u.userDto.Id}}
+		update = bson.M{"$push": bson.M{"blockByList": id}}
+
+		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+			filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	_, err = session.WithTransaction(context.Background(), callback, txnOpts)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to block user")
 	}
 
 	return  nil
@@ -481,6 +507,7 @@ func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error 
 
 	currentUser := new(domain.UserDto)
 
+	// todo better query
 	err = database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
 
 	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Id, currentUser.BlockList)
@@ -489,24 +516,49 @@ func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error 
 		return fmt.Errorf("this user is not blocked")
 	}
 
-	filter := bson.D{{"_id", id}}
-	update := bson.M{"$set": bson.M{"blockList": blockList}}
+	// sets mongo's read and write concerns
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
 
-	_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
-		filter, update)
+	// set up for a transaction
+	session, err := database.GetInstance().StartSession()
 
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	filter = bson.D{{"_id", u.userDto.Id}}
-	update = bson.M{"$set": bson.M{"blockByList": newBlockList}}
+	defer session.EndSession(context.Background())
 
-	_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
-		filter, update)
+	callback := func(sessionContext mongo.SessionContext) (interface{}, error) {
+
+		filter := bson.D{{"_id", id}}
+		update := bson.M{"$set": bson.M{"blockList": blockList}}
+
+		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+			filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		filter = bson.D{{"_id", u.userDto.Id}}
+		update = bson.M{"$set": bson.M{"blockByList": newBlockList}}
+
+		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+			filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, err
+	}
+
+	_, err = session.WithTransaction(context.Background(), callback, txnOpts)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unblock user")
 	}
 
 	return  nil

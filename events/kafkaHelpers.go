@@ -22,6 +22,7 @@ func PushUserToQueue(message []byte) error {
 
 	partition, offset, err := producer.SendMessage(msg)
 	if err != nil {
+		fmt.Println(fmt.Errorf("%v", err))
 		err = producer.Close()
 		if err != nil {
 			panic(err)

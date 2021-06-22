@@ -19,7 +19,7 @@ func CreateUser(createUserDto *domain.CreateUserDto) *domain.User {
 	user.AcceptMessages = true
 	user.BlockList = []primitive.ObjectID{}
 	user.BlockByList = []primitive.ObjectID{}
-	user.FlagCount = []domain.Flag{}
+	user.FlagCount = []primitive.ObjectID{}
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
