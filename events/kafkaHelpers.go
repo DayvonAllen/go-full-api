@@ -1,12 +1,11 @@
 package events
 
 import (
-	"bytes"
-	"encoding/json"
 	"example.com/app/config"
 	"example.com/app/domain"
 	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/vmihailenco/msgpack"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -42,10 +41,13 @@ func SendKafkaMessage(user *domain.User, eventType int) error {
 	um.MessageType = eventType
 
 	// turn user struct into a byte array
-	userBytes := new(bytes.Buffer)
-	err := json.NewEncoder(userBytes).Encode(&um)
+	b, err := msgpack.Marshal(&um)
 
-	err = PushUserToQueue(userBytes.Bytes())
+	if err != nil {
+		return err
+	}
+
+	err = PushUserToQueue(b)
 
 	if err != nil {
 		return err
