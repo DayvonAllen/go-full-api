@@ -1,8 +1,10 @@
 package services
 
 import (
+	"context"
 	"example.com/app/domain"
 	"example.com/app/repo"
+	cache2 "github.com/go-redis/cache/v8"
 	"github.com/gofiber/fiber/v2/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -11,7 +13,7 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers(primitive.ObjectID) (*[]domain.UserDto, error)
+	GetAllUsers(primitive.ObjectID, *cache2.Cache, context.Context) (*[]domain.UserDto, error)
 	GetAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
@@ -35,8 +37,8 @@ type DefaultUserService struct {
 	repo repo.UserRepo
 }
 
-func (s DefaultUserService) GetAllUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {
-	u, err := s.repo.FindAll(id)
+func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, rdb *cache2.Cache, ctx context.Context) (*[]domain.UserDto, error) {
+	u, err := s.repo.FindAll(id, rdb, ctx)
 	if err != nil {
 		return nil, err
 	}

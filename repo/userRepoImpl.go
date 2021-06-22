@@ -2,11 +2,13 @@ package repo
 
 import (
 	"context"
+	cache2 "example.com/app/cache"
 	"example.com/app/database"
 	"example.com/app/domain"
 	"example.com/app/events"
 	"example.com/app/util"
 	"fmt"
+	"github.com/go-redis/cache/v8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +26,7 @@ type UserRepoImpl struct {
 	userDtoList []domain.UserDto
 }
 
-func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) {
+func (u UserRepoImpl) FindAll(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context) (*[]domain.UserDto, error) {
 	currentUser, err := u.FindByID(id)
 
 	if err != nil {
@@ -32,7 +34,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) 
 	}
 
 	// Get all users
-	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), bson.M{
+	cur, err := database.GetInstance().UserCollection.Find(ctx, bson.M{
 		"profileIsViewable": true,
 		"$and": []interface{}{
 			bson.M{"_id": bson.M{ "$ne": id }},
@@ -46,11 +48,30 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID) (*[]domain.UserDto, error) 
 	}
 
 	var results []domain.UserDto
-	if err = cur.All(context.TODO(), &results); err != nil {
+	if err = cur.All(ctx, &results); err != nil {
 		log.Fatal(err)
 	}
 
 	u.userDtoList = results
+
+	go func() {
+
+		if err != nil {
+			panic(err)
+		}
+
+		err = rdb.Set(&cache.Item{
+			Ctx:   ctx,
+			Key:   util.GenerateKey(id.String(), "getallusers"),
+			Value: u.userDtoList,
+			TTL:   time.Hour,
+		})
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+	}()
 
 	return &u.userDtoList, nil
 }
@@ -108,7 +129,6 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 				return
 			}
 		}()
-
 
 		return nil
 	}

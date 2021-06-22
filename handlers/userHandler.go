@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
+	"example.com/app/cache"
 	"example.com/app/domain"
 	"example.com/app/services"
 	"example.com/app/util"
 	"fmt"
+	cache2 "github.com/go-redis/cache/v8"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
@@ -25,13 +28,26 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	users, err := uh.UserService.GetAllUsers(u.Id)
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+
+	ctx := context.TODO()
+	var data []domain.UserDto
+
+	err = rdb.Get(ctx, util.GenerateKey(u.Id.String(), "getallusers"), &data)
 
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		users, err := uh.UserService.GetAllUsers(u.Id, rdb, ctx)
+
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+
+		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
 	}
 
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
+	cache.RedisCachePool.Put(rdb)
+
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
 }
 
 func (uh *UserHandler) GetAllBlockedUsers(c *fiber.Ctx) error {

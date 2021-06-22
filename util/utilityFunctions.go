@@ -1,8 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"regexp"
+	"strings"
 )
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -34,4 +36,18 @@ func IsEmail(e string) bool {
 		return false
 	}
 	return emailRegex.MatchString(e)
+}
+
+func GenerateKey(value string, query string) string {
+	var key strings.Builder
+
+	for _, v := range strings.Fields(value) {
+		fmt.Println(v)
+		key.WriteString(v)
+	}
+
+	key.WriteString(":")
+	key.WriteString(query)
+
+	return key.String()
 }

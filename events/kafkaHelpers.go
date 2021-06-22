@@ -5,7 +5,7 @@ import (
 	"example.com/app/domain"
 	"fmt"
 	"github.com/Shopify/sarama"
-	"github.com/vmihailenco/msgpack"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 

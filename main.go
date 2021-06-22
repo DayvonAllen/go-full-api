@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	// create database connection instance for first time
+	// create database connection instance
 	_ = database.GetInstance()
 }
 
