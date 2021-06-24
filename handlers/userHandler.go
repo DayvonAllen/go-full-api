@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"context"
+	"example.com/app/cache"
 	"example.com/app/domain"
 	"example.com/app/services"
 	"example.com/app/util"
 	"fmt"
+	cache2 "github.com/go-redis/cache/v8"
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
@@ -22,22 +24,19 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
-
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-
 	ctx := context.TODO()
 
+	users, err := uh.UserService.GetAllUsers(u.Id, page, ctx)
 
-		users, err := uh.UserService.GetAllUsers(u.Id, page, ctx)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
 
-		if err != nil {
-			return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-		}
-
-		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
+	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
 
 }
 
@@ -87,7 +86,6 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
-
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
@@ -106,14 +104,27 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 	username := c.Params("username")
 
-	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username))
+	ctx := context.TODO()
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+
+	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username), rdb, ctx)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
+		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
+
+	var data domain.UserDto
+
+	err = rdb.Get(ctx, util.GenerateKey(user.Id.String(), "finduserbyusername"), &data)
+
+	cache.RedisCachePool.Put(rdb)
+
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
 }
 
@@ -123,7 +134,6 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
-
 
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
@@ -155,7 +165,6 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
-
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
@@ -185,7 +194,6 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
-
 
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
@@ -217,7 +225,6 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
-
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
@@ -247,7 +254,6 @@ func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
-
 
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
@@ -279,7 +285,6 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
-
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
@@ -310,7 +315,6 @@ func (uh *UserHandler) UpdateFlagCount(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
-
 
 	if err != nil || loggedIn == false {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})

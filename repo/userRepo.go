@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"example.com/app/domain"
+	cache2 "github.com/go-redis/cache/v8"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -11,7 +12,7 @@ type UserRepo interface {
 	FindAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
 	Create(*domain.User) error
 	FindByID(primitive.ObjectID) (*domain.UserDto, error)
-	FindByUsername(string) (*domain.UserDto, error)
+	FindByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateByID(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility) error
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error

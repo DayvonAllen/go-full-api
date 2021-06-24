@@ -2,11 +2,13 @@ package repo
 
 import (
 	"context"
+	cache2 "example.com/app/cache"
 	"example.com/app/database"
 	"example.com/app/domain"
 	"example.com/app/events"
 	"example.com/app/util"
 	"fmt"
+	"github.com/go-redis/cache/v8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -143,7 +145,7 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
 	return &u.userDto, nil
 }
 
-func (u UserRepoImpl) FindByUsername(username string) (*domain.UserDto, error) {
+func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
 	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if err != nil {
@@ -153,6 +155,25 @@ func (u UserRepoImpl) FindByUsername(username string) (*domain.UserDto, error) {
 		}
 		return  nil, fmt.Errorf("error processing data")
 	}
+
+	go func() {
+
+		if err != nil {
+			panic(err)
+		}
+
+		err = rdb.Set(&cache.Item{
+			Ctx:   ctx,
+			Key:   util.GenerateKey(u.userDto.Id.String(), "finduserbyusername"),
+			Value: u.userDto,
+			TTL:   time.Hour,
+		})
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+	}()
 
 	return &u.userDto, nil
 }

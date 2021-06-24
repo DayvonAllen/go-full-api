@@ -4,6 +4,7 @@ import (
 	"context"
 	"example.com/app/domain"
 	"example.com/app/repo"
+	cache2 "github.com/go-redis/cache/v8"
 	"github.com/gofiber/fiber/v2/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -16,7 +17,7 @@ type UserService interface {
 	GetAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
-	GetUserByUsername(string) (*domain.UserDto, error)
+	GetUserByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility) error
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
@@ -83,8 +84,8 @@ func (s DefaultUserService) GetUserByID(id primitive.ObjectID) (*domain.UserDto,
 	return u, nil
 }
 
-func (s DefaultUserService) GetUserByUsername(username string) (*domain.UserDto, error) {
-	u, err := s.repo.FindByUsername(username)
+func (s DefaultUserService) GetUserByUsername(username string, rdb *cache2.Cache, ctx context.Context) (*domain.UserDto, error) {
+	u, err := s.repo.FindByUsername(username, rdb, ctx)
 	if err != nil {
 		return nil, err
 	}
