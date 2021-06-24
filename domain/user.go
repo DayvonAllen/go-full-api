@@ -90,3 +90,8 @@ type UserDto struct {
 	VerificationCode string      `bson:"verificationCode" json:"-"`
 	TokenExpiresAt int64         `bson:"tokenExpiresAt" json:"-"`
 }
+
+type UserResponse struct {
+	Users []UserDto
+	CurrentPage string
+}

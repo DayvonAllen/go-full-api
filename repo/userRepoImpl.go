@@ -23,9 +23,10 @@ type UserRepoImpl struct {
 	user domain.User
 	userDto domain.UserDto
 	userDtoList []domain.UserDto
+	userResponse domain.UserResponse
 }
 
-func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context) (*[]domain.UserDto, error) {
+func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context) (*domain.UserResponse, error) {
 	currentUser, err := u.FindByID(id)
 
 	if err != nil {
@@ -37,7 +38,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil {
-		return nil,  fmt.Errorf("must input a number")
+		return nil,  fmt.Errorf("page must input a number")
 	}
 	findOptions.SetSkip((int64(pageNumber) - 1) * int64(perPage))
 	findOptions.SetLimit(int64(perPage))
@@ -63,7 +64,9 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 
 	u.userDtoList = results
 
-	return &u.userDtoList, nil
+	u.userResponse = domain.UserResponse{Users: u.userDtoList, CurrentPage: page}
+
+	return &u.userResponse, nil
 }
 
 func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {

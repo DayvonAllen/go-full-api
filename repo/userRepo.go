@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepo interface {
-	FindAll(primitive.ObjectID, string, context.Context) (*[]domain.UserDto, error)
+	FindAll(primitive.ObjectID, string, context.Context) (*domain.UserResponse, error)
 	FindAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
 	Create(*domain.User) error
 	FindByID(primitive.ObjectID) (*domain.UserDto, error)

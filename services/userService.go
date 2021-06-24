@@ -12,7 +12,7 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers(primitive.ObjectID, string, context.Context) (*[]domain.UserDto, error)
+	GetAllUsers(primitive.ObjectID, string, context.Context) (*domain.UserResponse, error)
 	GetAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
@@ -36,7 +36,7 @@ type DefaultUserService struct {
 	repo repo.UserRepo
 }
 
-func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx context.Context) (*[]domain.UserDto, error) {
+func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx context.Context) (*domain.UserResponse, error) {
 	u, err := s.repo.FindAll(id, page, ctx)
 	if err != nil {
 		return nil, err
