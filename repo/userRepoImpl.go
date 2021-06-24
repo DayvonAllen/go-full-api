@@ -2,13 +2,11 @@ package repo
 
 import (
 	"context"
-	cache2 "example.com/app/cache"
 	"example.com/app/database"
 	"example.com/app/domain"
 	"example.com/app/events"
 	"example.com/app/util"
 	"fmt"
-	"github.com/go-redis/cache/v8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -26,12 +25,22 @@ type UserRepoImpl struct {
 	userDtoList []domain.UserDto
 }
 
-func (u UserRepoImpl) FindAll(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context) (*[]domain.UserDto, error) {
+func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context) (*[]domain.UserDto, error) {
 	currentUser, err := u.FindByID(id)
 
 	if err != nil {
 		return nil, err
 	}
+
+	findOptions := options.FindOptions{}
+	perPage := 20
+	pageNumber, err := strconv.Atoi(page)
+
+	if err != nil {
+		return nil,  fmt.Errorf("must input a number")
+	}
+	findOptions.SetSkip((int64(pageNumber) - 1) * int64(perPage))
+	findOptions.SetLimit(int64(perPage))
 
 	// Get all users
 	cur, err := database.GetInstance().UserCollection.Find(ctx, bson.M{
@@ -41,7 +50,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, rdb *cache.Cache, ctx conte
 			bson.M{"_id": bson.M{"$nin": currentUser.BlockByList}},
 			bson.M{"_id": bson.M{"$nin": currentUser.BlockList}},
 		},
-	})
+	}, &findOptions)
 
 	if err != nil {
 		return nil, err
@@ -53,25 +62,6 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, rdb *cache.Cache, ctx conte
 	}
 
 	u.userDtoList = results
-
-	go func() {
-
-		if err != nil {
-			panic(err)
-		}
-
-		err = rdb.Set(&cache.Item{
-			Ctx:   ctx,
-			Key:   util.GenerateKey(id.String(), "getallusers"),
-			Value: u.userDtoList,
-			TTL:   time.Hour,
-		})
-
-		if err != nil {
-			cache2.RedisCachePool.Put(rdb)
-			panic(err)
-		}
-	}()
 
 	return &u.userDtoList, nil
 }
