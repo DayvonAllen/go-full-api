@@ -18,7 +18,7 @@ type UserService interface {
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
 	GetUserByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
-	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility) error
+	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility, *cache2.Cache, context.Context) error
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
 	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture) error
@@ -92,9 +92,9 @@ func (s DefaultUserService) GetUserByUsername(username string, rdb *cache2.Cache
 	return u, nil
 }
 
-func (s DefaultUserService) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility) error {
+func (s DefaultUserService) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
-	err := s.repo.UpdateProfileVisibility(id, user)
+	err := s.repo.UpdateProfileVisibility(id, user, rdb, ctx)
 	if err != nil {
 		return err
 	}

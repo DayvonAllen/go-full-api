@@ -21,10 +21,10 @@ import (
 )
 
 type UserRepoImpl struct {
-	users []domain.User
-	user domain.User
-	userDto domain.UserDto
-	userDtoList []domain.UserDto
+	users        []domain.User
+	user         domain.User
+	userDto      domain.UserDto
+	userDtoList  []domain.UserDto
 	userResponse domain.UserResponse
 }
 
@@ -40,7 +40,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil {
-		return nil,  fmt.Errorf("page must input a number")
+		return nil, fmt.Errorf("page must input a number")
 	}
 	findOptions.SetSkip((int64(pageNumber) - 1) * int64(perPage))
 	findOptions.SetLimit(int64(perPage))
@@ -49,7 +49,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	cur, err := database.GetInstance().UserCollection.Find(ctx, bson.M{
 		"profileIsViewable": true,
 		"$and": []interface{}{
-			bson.M{"_id": bson.M{ "$ne": id }},
+			bson.M{"_id": bson.M{"$ne": id}},
 			bson.M{"_id": bson.M{"$nin": currentUser.BlockByList}},
 			bson.M{"_id": bson.M{"$nin": currentUser.BlockList}},
 		},
@@ -75,8 +75,8 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.User
 	currentUser, err := u.FindByID(id)
 
 	if err != nil {
-	 	return nil, err
-	 }
+		return nil, err
+	}
 
 	query := bson.M{"_id": bson.M{"$in": currentUser.BlockList}}
 
@@ -153,18 +153,13 @@ func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx cont
 		if err == mongo.ErrNoDocuments {
 			return nil, err
 		}
-		return  nil, fmt.Errorf("error processing data")
+		return nil, fmt.Errorf("error processing data")
 	}
 
 	go func() {
-
-		if err != nil {
-			panic(err)
-		}
-
 		err = rdb.Set(&cache.Item{
 			Ctx:   ctx,
-			Key:   util.GenerateKey(u.userDto.Id.String(), "finduserbyusername"),
+			Key:   util.GenerateKey(username, "finduserbyusername"),
 			Value: u.userDto,
 			TTL:   time.Hour,
 		})
@@ -173,6 +168,8 @@ func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx cont
 			cache2.RedisCachePool.Put(rdb)
 			panic(err)
 		}
+		cache2.RedisCachePool.Put(rdb)
+		return
 	}()
 
 	return &u.userDto, nil
@@ -189,7 +186,7 @@ func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*dom
 	return &u.userDto, nil
 }
 
-func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility) error {
+func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility, rdb *cache.Cache, ctx context.Context) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profileIsViewable", user.ProfileIsViewable}}}}
@@ -213,11 +210,21 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 		}
 	}()
 
-	if err != nil {
-		return err
-	}
+	go func() {
 
-	return  nil
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
+	return nil
 }
 
 func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance) error {
@@ -247,7 +254,7 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 		return err
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge) error {
@@ -277,7 +284,7 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 		return err
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture) error {
@@ -307,7 +314,7 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 		return err
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture) error {
@@ -337,7 +344,7 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 		return err
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline) error {
@@ -367,7 +374,7 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 		return err
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
@@ -397,7 +404,7 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 		return err
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) error {
@@ -408,7 +415,7 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 	database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts)
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
@@ -417,11 +424,10 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 			bson.M{"flaggerID": flag.FlaggerID},
 			bson.M{"flaggedUsername": flag.FlaggedUsername},
 		},
-
 	})
 
 	if err != nil {
-		return  fmt.Errorf("error processing data")
+		return fmt.Errorf("error processing data")
 	}
 
 	if !cur.Next(context.TODO()) {
@@ -444,7 +450,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		return nil
 	}
 
-	return  fmt.Errorf("you've already flagged this user")
+	return fmt.Errorf("you've already flagged this user")
 }
 
 func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
@@ -514,7 +520,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 		return fmt.Errorf("failed to block user")
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error {
@@ -595,7 +601,7 @@ func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error 
 		return fmt.Errorf("failed to unblock user")
 	}
 
-	return  nil
+	return nil
 }
 
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID) error {

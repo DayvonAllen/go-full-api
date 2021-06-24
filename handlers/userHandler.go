@@ -107,6 +107,14 @@ func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 	ctx := context.TODO()
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	var data domain.UserDto
+
+	err := rdb.Get(ctx, util.GenerateKey(username, "finduserbyusername"), &data)
+
+	if err == nil {
+		cache.RedisCachePool.Put(rdb)
+		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
+	}
 
 	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username), rdb, ctx)
 
@@ -119,12 +127,7 @@ func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	var data domain.UserDto
-
-	err = rdb.Get(ctx, util.GenerateKey(user.Id.String(), "finduserbyusername"), &data)
-
 	cache.RedisCachePool.Put(rdb)
-
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
 }
 
@@ -147,14 +150,21 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = uh.UserService.UpdateProfileVisibility(u.Id, userDto)
+	ctx := context.TODO()
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+
+	err = uh.UserService.UpdateProfileVisibility(u.Id, userDto, rdb, ctx)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
+		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
+
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
