@@ -20,7 +20,7 @@
 
 ## Routes
 - Get All users:
-  - `GET:http://localhost:8080/users`(protected, needs token)
+  - `GET:http://localhost:8080/users?page=1`(protected, needs token. Gives 20 documents at a time)
 - Login:
   - `POST:http://localhost:8080/auth/login`
   - JSON: `{
