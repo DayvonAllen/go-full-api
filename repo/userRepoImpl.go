@@ -108,8 +108,8 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 	if err != nil {
 		return fmt.Errorf("error processing data")
 	}
-
-	if !cur.Next(context.TODO()) {
+	found := cur.Next(context.TODO())
+	if !found {
 		user.Id = primitive.NewObjectID()
 		_, err = database.GetInstance().UserCollection.InsertOne(context.TODO(), &user)
 
@@ -127,8 +127,22 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 
 		return nil
 	}
+	err = cur.Decode(&u.userDto)
+	if err != nil {
+		return err
+	}
 
-	return fmt.Errorf("user already exists")
+	err = cur.Close(context.TODO())
+
+	if err != nil {
+		return err
+	}
+
+	if u.userDto.Username == user.Username {
+		return fmt.Errorf("username is taken")
+	}
+
+	return fmt.Errorf("email is taken")
 }
 
 func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
@@ -227,7 +241,7 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 	return nil
 }
 
-func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance) error {
+func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance, rdb *cache.Cache, ctx context.Context) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"acceptMessages", user.AcceptMessages}}}}
@@ -250,14 +264,25 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 		}
 	}()
 
-	if err != nil {
-		return err
-	}
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
 
 	return nil
 }
 
-func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge) error {
+func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge, rdb *cache.Cache, ctx context.Context) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"currentBadgeUrl", user.CurrentBadgeUrl}}}}
@@ -280,14 +305,25 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 		}
 	}()
 
-	if err != nil {
-		return err
-	}
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
 
 	return nil
 }
 
-func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture) error {
+func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture, rdb *cache.Cache, ctx context.Context) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profilePictureUrl", user.ProfilePictureUrl}}}}
@@ -310,9 +346,20 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 		}
 	}()
 
-	if err != nil {
-		return err
-	}
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
 
 	return nil
 }

@@ -19,9 +19,9 @@ type UserService interface {
 	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
 	GetUserByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility, *cache2.Cache, context.Context) error
-	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
-	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
-	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture) error
+	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance, *cache2.Cache, context.Context) error
+	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge, *cache2.Cache, context.Context) error
+	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture, *cache2.Cache, context.Context) error
 	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture) error
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
@@ -101,27 +101,27 @@ func (s DefaultUserService) UpdateProfileVisibility(id primitive.ObjectID, user 
 	return nil
 }
 
-func (s DefaultUserService) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance) error {
+func (s DefaultUserService) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
-	err := s.repo.UpdateMessageAcceptance(id, user)
+	err := s.repo.UpdateMessageAcceptance(id, user, rdb, ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DefaultUserService) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge) error {
+func (s DefaultUserService) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
-	err := s.repo.UpdateCurrentBadge(id, user)
+	err := s.repo.UpdateCurrentBadge(id, user, rdb, ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DefaultUserService) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture) error {
+func (s DefaultUserService) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
-	err := s.repo.UpdateProfilePicture(id, user)
+	err := s.repo.UpdateProfilePicture(id, user, rdb, ctx)
 	if err != nil {
 		return err
 	}

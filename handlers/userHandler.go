@@ -187,12 +187,18 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = uh.UserService.UpdateMessageAcceptance(u.Id, userDto)
+	ctx := context.TODO()
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+
+	err = uh.UserService.UpdateMessageAcceptance(u.Id, userDto, rdb, ctx)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
+		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
@@ -217,12 +223,18 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = uh.UserService.UpdateCurrentBadge(u.Id, userDto)
+	ctx := context.TODO()
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+
+	err = uh.UserService.UpdateCurrentBadge(u.Id, userDto, rdb, ctx)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
+		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
@@ -247,12 +259,18 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	err = uh.UserService.UpdateProfilePicture(u.Id, userDto)
+	ctx := context.TODO()
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+
+	err = uh.UserService.UpdateProfilePicture(u.Id, userDto, rdb, ctx)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
+			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
+		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})

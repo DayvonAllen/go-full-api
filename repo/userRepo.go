@@ -15,9 +15,9 @@ type UserRepo interface {
 	FindByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateByID(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility, *cache2.Cache, context.Context) error
-	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance) error
-	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge) error
-	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture) error
+	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance, *cache2.Cache, context.Context) error
+	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge, *cache2.Cache, context.Context) error
+	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture, *cache2.Cache, context.Context) error
 	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture) error
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
