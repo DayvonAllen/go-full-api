@@ -22,14 +22,14 @@ type UserService interface {
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance, *cache2.Cache, context.Context) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge, *cache2.Cache, context.Context) error
 	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture, *cache2.Cache, context.Context) error
-	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture) error
-	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
+	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture, *cache2.Cache, context.Context) error
+	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline, *cache2.Cache, context.Context)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
-	BlockUser(primitive.ObjectID, string) error
-	UnBlockUser(primitive.ObjectID, string) error
-	DeleteByID(primitive.ObjectID) error
+	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
+	UnBlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
+	DeleteByID(primitive.ObjectID, *cache2.Cache, context.Context, string) error
 }
 
 // DefaultUserService the service has a dependency of the repo
@@ -127,18 +127,18 @@ func (s DefaultUserService) UpdateProfilePicture(id primitive.ObjectID, user *do
 	}
 	return nil
 }
-func (s DefaultUserService) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture) error {
+func (s DefaultUserService) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
-	err := s.repo.UpdateProfileBackgroundPicture(id, user)
+	err := s.repo.UpdateProfileBackgroundPicture(id, user, rdb, ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DefaultUserService) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline) error {
+func (s DefaultUserService) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
-	err := s.repo.UpdateCurrentTagline(id, user)
+	err := s.repo.UpdateCurrentTagline(id, user, rdb, ctx)
 	if err != nil {
 		return err
 	}
@@ -170,24 +170,24 @@ func (s DefaultUserService) UpdateFlagCount(flag *domain.Flag) error {
 	return nil
 }
 
-func (s DefaultUserService) DeleteByID(id primitive.ObjectID) error {
-	err := s.repo.DeleteByID(id)
+func (s DefaultUserService) DeleteByID(id primitive.ObjectID, rdb *cache2.Cache, ctx context.Context, username string) error {
+	err := s.repo.DeleteByID(id, rdb, ctx, username)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DefaultUserService) BlockUser(id primitive.ObjectID, username string) error {
-	err := s.repo.BlockUser(id, username)
+func (s DefaultUserService) BlockUser(id primitive.ObjectID, username string, rdb *cache2.Cache, ctx context.Context) error {
+	err := s.repo.BlockUser(id, username, rdb, ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DefaultUserService) UnBlockUser(id primitive.ObjectID, username string) error {
-	err := s.repo.UnBlockUser(id, username)
+func (s DefaultUserService) UnBlockUser(id primitive.ObjectID, username string, rdb *cache2.Cache, ctx context.Context) error {
+	err := s.repo.UnBlockUser(id, username, rdb, ctx)
 	if err != nil {
 		return err
 	}

@@ -194,6 +194,7 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx cont
 		})
 
 		if err != nil {
+			fmt.Println("Found in cache in find by ID...")
 			cache2.RedisCachePool.Put(rdb)
 			panic(err)
 		}
@@ -408,6 +409,7 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 			panic(err)
 		}
 
+		fmt.Println("Removed from cache, update profile picture")
 		cache2.RedisCachePool.Put(rdb)
 
 		return
@@ -416,7 +418,7 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 	return nil
 }
 
-func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture) error {
+func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture, rdb *cache.Cache, ctx context.Context) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profileBackgroundPictureUrl", user.ProfileBackgroundPictureUrl}}}}
@@ -439,14 +441,26 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 		}
 	}()
 
-	if err != nil {
-		return err
-	}
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, update profile background picture")
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
 
 	return nil
 }
 
-func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline) error {
+func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline, rdb *cache.Cache, ctx context.Context) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"currentTagLine", user.CurrentTagLine}}}}
@@ -469,9 +483,21 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 		}
 	}()
 
-	if err != nil {
-		return err
-	}
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, update current tag")
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
 
 	return nil
 }
@@ -552,7 +578,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 	return fmt.Errorf("you've already flagged this user")
 }
 
-func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
+func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context) error {
 
 	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
@@ -619,10 +645,26 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string) error {
 		return fmt.Errorf("failed to block user")
 	}
 
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, block user")
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
+
 	return nil
 }
 
-func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error {
+func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context) error {
 
 	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
@@ -700,14 +742,55 @@ func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string) error 
 		return fmt.Errorf("failed to unblock user")
 	}
 
+	go func() {
+
+		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, unblock user")
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
+
 	return nil
 }
 
-func (u UserRepoImpl) DeleteByID(id primitive.ObjectID) error {
+func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context, username string) error {
 	_, err := database.GetInstance().UserCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}})
 	if err != nil {
 		return err
 	}
+
+	u.user.Id = id
+
+	go func() {
+		err := events.HandleKafkaMessage(err, &u.user, 204)
+		if err != nil {
+			return
+		}
+	}()
+
+	go func() {
+
+		fmt.Println(util.GenerateKey(username, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(username, "finduserbyusername"))
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, delete by ID")
+		cache2.RedisCachePool.Put(rdb)
+
+		return
+	}()
 	return nil
 }
 

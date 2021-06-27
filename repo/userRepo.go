@@ -18,12 +18,12 @@ type UserRepo interface {
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance, *cache2.Cache, context.Context) error
 	UpdateCurrentBadge(primitive.ObjectID, *domain.UpdateCurrentBadge, *cache2.Cache, context.Context) error
 	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture, *cache2.Cache, context.Context) error
-	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture) error
-	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline)  error
+	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture, *cache2.Cache, context.Context) error
+	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline, *cache2.Cache, context.Context)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
-	BlockUser(primitive.ObjectID, string) error
-	UnBlockUser(primitive.ObjectID, string) error
-	DeleteByID(primitive.ObjectID) error
+	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
+	UnBlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
+	DeleteByID(primitive.ObjectID, *cache2.Cache, context.Context, string) error
 }

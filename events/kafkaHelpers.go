@@ -35,7 +35,7 @@ func PushUserToQueue(message []byte) error {
 
 func SendKafkaMessage(user *domain.User, eventType int) error {
 	um := new(domain.UserMessage)
-	um.User = *user
+	um.User = user
 
 	// user created/updated event
 	um.MessageType = eventType
