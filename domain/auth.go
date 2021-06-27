@@ -9,6 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -125,7 +126,7 @@ func(l Authentication) IsLoggedIn(tokenValue string) (*Authentication, bool, err
 		claims := token.Claims.(*Claims)
 
 		l.Id = claims.Id
-		l.Username = claims.Username
+		l.Username = strings.ToLower(claims.Username)
 		return &l, true, nil
 	}
 

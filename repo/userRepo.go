@@ -23,7 +23,7 @@ type UserRepo interface {
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
-	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
-	UnBlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
+	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error
+	UnblockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error
 	DeleteByID(primitive.ObjectID, *cache2.Cache, context.Context, string) error
 }

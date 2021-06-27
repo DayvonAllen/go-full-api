@@ -582,8 +582,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 	return fmt.Errorf("you've already flagged this user")
 }
 
-func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context) error {
-
+func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context, currentUsername string) error {
 	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
@@ -651,8 +650,8 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 
 	go func() {
 
-		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
-		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		fmt.Println(util.GenerateKey(currentUsername, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(currentUsername, "finduserbyusername"))
 
 		if err != nil {
 			cache2.RedisCachePool.Put(rdb)
@@ -668,7 +667,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 	return nil
 }
 
-func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context) error {
+func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context, currentUsername string) error {
 
 	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
@@ -748,8 +747,8 @@ func (u UserRepoImpl) UnBlockUser(id primitive.ObjectID, username string, rdb *c
 
 	go func() {
 
-		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
-		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+		fmt.Println(util.GenerateKey(currentUsername, "finduserbyusername"))
+		err := rdb.Delete(ctx, util.GenerateKey(currentUsername, "finduserbyusername"))
 
 		if err != nil {
 			cache2.RedisCachePool.Put(rdb)

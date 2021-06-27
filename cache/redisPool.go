@@ -1,24 +1,23 @@
 package cache
 
 import (
-	"fmt"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
 	"sync"
 	"time"
 )
 
-var RedisConnectionPool = sync.Pool{
-	// function to execute when no instance of a buffer is not found
-	New: func() interface{} {
-		fmt.Println("allocating new redis connection")
-		return redis.NewClient(&redis.Options{
-			Addr:     "localhost:6379",
-			Password: "", // no password set
-			DB:       0,  // use default DB
-		})
-	},
-}
+//var RedisConnectionPool = sync.Pool{
+//	// function to execute when no instance of a buffer is not found
+//	New: func() interface{} {
+//		fmt.Println("allocating new redis connection")
+//		return redis.NewClient(&redis.Options{
+//			Addr:     "localhost:6379",
+//			Password: "", // no password set
+//			DB:       0,  // use default DB
+//		})
+//	},
+//}
 
 var RedisCachePool = sync.Pool{
 	// function to execute when no instance of a buffer is not found

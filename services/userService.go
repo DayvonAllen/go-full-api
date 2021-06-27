@@ -27,8 +27,8 @@ type UserService interface {
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
-	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
-	UnBlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context) error
+	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error
+	UnblockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error
 	DeleteByID(primitive.ObjectID, *cache2.Cache, context.Context, string) error
 }
 
@@ -178,16 +178,16 @@ func (s DefaultUserService) DeleteByID(id primitive.ObjectID, rdb *cache2.Cache,
 	return nil
 }
 
-func (s DefaultUserService) BlockUser(id primitive.ObjectID, username string, rdb *cache2.Cache, ctx context.Context) error {
-	err := s.repo.BlockUser(id, username, rdb, ctx)
+func (s DefaultUserService) BlockUser(id primitive.ObjectID, username string, rdb *cache2.Cache, ctx context.Context, currentUsername string) error {
+	err := s.repo.BlockUser(id, username, rdb, ctx, currentUsername)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s DefaultUserService) UnBlockUser(id primitive.ObjectID, username string, rdb *cache2.Cache, ctx context.Context) error {
-	err := s.repo.UnBlockUser(id, username, rdb, ctx)
+func (s DefaultUserService) UnblockUser(id primitive.ObjectID, username string, rdb *cache2.Cache, ctx context.Context, currentUsername string) error {
+	err := s.repo.UnblockUser(id, username, rdb, ctx, currentUsername)
 	if err != nil {
 		return err
 	}

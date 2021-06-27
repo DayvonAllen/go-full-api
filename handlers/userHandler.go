@@ -452,7 +452,7 @@ func (uh *UserHandler) BlockUser(c *fiber.Ctx) error {
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.BlockUser(u.Id, strings.ToLower(username), rdb, ctx)
+	err = uh.UserService.BlockUser(u.Id, strings.ToLower(username), rdb, ctx, u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -481,7 +481,7 @@ func (uh *UserHandler) UnblockUser(c *fiber.Ctx) error {
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UnBlockUser(u.Id, strings.ToLower(username), rdb, ctx)
+	err = uh.UserService.UnblockUser(u.Id, strings.ToLower(username), rdb, ctx, u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
