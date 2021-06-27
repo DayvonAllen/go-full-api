@@ -207,12 +207,16 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx cont
 }
 
 func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
+		[]interface{}{
+		bson.M{"profileIsViewable": true,
+		},
+	}}).Decode(&u.userDto)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
-			return nil, err
+			return nil, fmt.Errorf("cannot find user")
 		}
 		return nil, fmt.Errorf("error processing data")
 	}
