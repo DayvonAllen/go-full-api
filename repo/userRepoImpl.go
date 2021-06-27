@@ -55,7 +55,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil {
-		return nil, fmt.Errorf("page must input a number")
+		return nil, fmt.Errorf("page must be a number")
 	}
 	findOptions.SetSkip((int64(pageNumber) - 1) * int64(perPage))
 	findOptions.SetLimit(int64(perPage))
