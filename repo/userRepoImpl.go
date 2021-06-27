@@ -51,7 +51,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	}
 
 	findOptions := options.FindOptions{}
-	perPage := 20
+	perPage := 10
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil {
