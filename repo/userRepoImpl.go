@@ -39,11 +39,13 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	if err == nil {
 		cache2.RedisCachePool.Put(rdb)
 		currentUser = &data
+		fmt.Println("Found in Cache in find all users...")
 	} else {
 		currentUser, err = u.FindByID(id, rdb, ctx)
 
 		if err != nil {
 			cache2.RedisCachePool.Put(rdb)
+			fmt.Println("Did not find in Cache in find all users...")
 			return nil, err
 		}
 	}
@@ -94,11 +96,12 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cac
 	if err == nil {
 		cache2.RedisCachePool.Put(rdb)
 		currentUser = &data
-		fmt.Println("Found in Cache in find all block users...")
+		fmt.Println("Found in Cache in find all blocked users...")
 	} else {
 		currentUser, err = u.FindByID(id, rdb, ctx)
 
 		if err != nil {
+			fmt.Println("Did not find in Cache in find all blocked users...")
 			cache2.RedisCachePool.Put(rdb)
 			return nil, err
 		}
