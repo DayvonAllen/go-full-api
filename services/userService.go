@@ -13,10 +13,10 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers(primitive.ObjectID, string, context.Context) (*domain.UserResponse, error)
-	GetAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
+	GetAllUsers(primitive.ObjectID, string, context.Context, *cache2.Cache, string) (*domain.UserResponse, error)
+	GetAllBlockedUsers(primitive.ObjectID, *cache2.Cache, context.Context, string) (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
-	GetUserByID(primitive.ObjectID) (*domain.UserDto, error)
+	GetUserByID(primitive.ObjectID, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	GetUserByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility, *cache2.Cache, context.Context) error
 	UpdateMessageAcceptance(primitive.ObjectID, *domain.UpdateMessageAcceptance, *cache2.Cache, context.Context) error
@@ -37,16 +37,16 @@ type DefaultUserService struct {
 	repo repo.UserRepo
 }
 
-func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx context.Context) (*domain.UserResponse, error) {
-	u, err := s.repo.FindAll(id, page, ctx)
+func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx context.Context, rdb *cache2.Cache, username string) (*domain.UserResponse, error) {
+	u, err := s.repo.FindAll(id, page, ctx, rdb, username)
 	if err != nil {
 		return nil, err
 	}
 	return  u, nil
 }
 
-func (s DefaultUserService) GetAllBlockedUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {
-	u, err := s.repo.FindAllBlockedUsers(id)
+func (s DefaultUserService) GetAllBlockedUsers(id primitive.ObjectID, rdb *cache2.Cache, ctx context.Context, username string) (*[]domain.UserDto, error) {
+	u, err := s.repo.FindAllBlockedUsers(id, rdb, ctx, username)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +76,8 @@ func (s DefaultUserService) CreateUser(user *domain.User) error {
 	return nil
 }
 
-func (s DefaultUserService) GetUserByID(id primitive.ObjectID) (*domain.UserDto, error) {
-	u, err := s.repo.FindByID(id)
+func (s DefaultUserService) GetUserByID(id primitive.ObjectID, rdb *cache2.Cache, ctx context.Context) (*domain.UserDto, error) {
+	u, err := s.repo.FindByID(id, rdb, ctx)
 	if err != nil {
 		return nil, err
 	}

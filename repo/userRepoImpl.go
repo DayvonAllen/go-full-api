@@ -28,11 +28,24 @@ type UserRepoImpl struct {
 	userResponse domain.UserResponse
 }
 
-func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context) (*domain.UserResponse, error) {
-	currentUser, err := u.FindByID(id)
+func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context, rdb *cache.Cache, username string) (*domain.UserResponse, error) {
 
-	if err != nil {
-		return nil, err
+	var data domain.UserDto
+
+	err := rdb.Get(ctx, util.GenerateKey(username, "finduserbyusername"), &data)
+
+	var currentUser *domain.UserDto
+
+	if err == nil {
+		cache2.RedisCachePool.Put(rdb)
+		currentUser = &data
+	} else {
+		currentUser, err = u.FindByID(id, rdb, ctx)
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			return nil, err
+		}
 	}
 
 	findOptions := options.FindOptions{}
@@ -71,11 +84,24 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	return &u.userResponse, nil
 }
 
-func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID) (*[]domain.UserDto, error) {
-	currentUser, err := u.FindByID(id)
+func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cache, ctx context.Context, username string) (*[]domain.UserDto, error) {
+	var data domain.UserDto
 
-	if err != nil {
-		return nil, err
+	err := rdb.Get(ctx, util.GenerateKey(username, "finduserbyusername"), &data)
+
+	var currentUser *domain.UserDto
+
+	if err == nil {
+		cache2.RedisCachePool.Put(rdb)
+		currentUser = &data
+		fmt.Println("Found in Cache in find all block users...")
+	} else {
+		currentUser, err = u.FindByID(id, rdb, ctx)
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			return nil, err
+		}
 	}
 
 	query := bson.M{"_id": bson.M{"$in": currentUser.BlockList}}
@@ -145,7 +171,7 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 	return fmt.Errorf("email is taken")
 }
 
-func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
+func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
 	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
 
 	if err != nil {
@@ -155,6 +181,23 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID) (*domain.UserDto, error) {
 		}
 		return nil, fmt.Errorf("error with the database")
 	}
+
+	go func() {
+		err = rdb.Set(&cache.Item{
+			Ctx:   ctx,
+			Key:   util.GenerateKey(u.userDto.Username, "finduserbyusername"),
+			Value: u.userDto,
+			TTL:   time.Hour,
+		})
+
+		if err != nil {
+			cache2.RedisCachePool.Put(rdb)
+			panic(err)
+		}
+		cache2.RedisCachePool.Put(rdb)
+		fmt.Println("Cached in find by ID...")
+		return
+	}()
 
 	return &u.userDto, nil
 }
@@ -183,6 +226,7 @@ func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx cont
 			panic(err)
 		}
 		cache2.RedisCachePool.Put(rdb)
+		fmt.Println("Cached in find by username...")
 		return
 	}()
 
@@ -230,10 +274,11 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 
 		if err != nil {
+			fmt.Println("Not in cache, update profile visibility")
 			cache2.RedisCachePool.Put(rdb)
 			panic(err)
 		}
-
+		fmt.Println("Removed from cache, update profile visibility")
 		cache2.RedisCachePool.Put(rdb)
 
 		return
@@ -270,10 +315,12 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 
 		if err != nil {
+			fmt.Println("Not in cache, update message acceptance")
 			cache2.RedisCachePool.Put(rdb)
 			panic(err)
 		}
 
+		fmt.Println("Removed from cache, update message acceptance")
 		cache2.RedisCachePool.Put(rdb)
 
 		return
@@ -311,10 +358,12 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 
 		if err != nil {
+			fmt.Println("Not in cache, update message acceptance")
 			cache2.RedisCachePool.Put(rdb)
 			panic(err)
 		}
 
+		fmt.Println("Removed from cache, update current badge")
 		cache2.RedisCachePool.Put(rdb)
 
 		return

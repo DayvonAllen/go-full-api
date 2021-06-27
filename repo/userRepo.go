@@ -8,10 +8,10 @@ import (
 )
 
 type UserRepo interface {
-	FindAll(primitive.ObjectID, string, context.Context) (*domain.UserResponse, error)
-	FindAllBlockedUsers(primitive.ObjectID) (*[]domain.UserDto, error)
+	FindAll(primitive.ObjectID, string, context.Context, *cache2.Cache, string) (*domain.UserResponse, error)
+	FindAllBlockedUsers(primitive.ObjectID, *cache2.Cache, context.Context, string) (*[]domain.UserDto, error)
 	Create(*domain.User) error
-	FindByID(primitive.ObjectID) (*domain.UserDto, error)
+	FindByID(primitive.ObjectID, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	FindByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateByID(primitive.ObjectID, *domain.User) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility, *cache2.Cache, context.Context) error
