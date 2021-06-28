@@ -104,12 +104,8 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 		user.TokenHash = hash
 		user.TokenExpiresAt = time.Now().Add(time.Duration(expiration) * time.Minute).Unix()
 		ur := new(UserRepoImpl)
+		database.MongoConnectionPool.Put(conn)
 		_, err = ur.UpdateByID(user.Id, &user)
-
-		if err != nil {
-			database.MongoConnectionPool.Put(conn)
-			return err
-		}
 	}
 
 	// send token url in email to user
@@ -141,15 +137,14 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 		return fmt.Errorf("token has expired")
 	}
 
+	database.MongoConnectionPool.Put(conn)
 	// update password logic
 	err = ur.UpdatePassword(user.Id, password)
 
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
-	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
@@ -179,14 +174,13 @@ func (a AuthRepoImpl) VerifyCode(code string) error{
 
 	u.IsVerified = true
 
+	database.MongoConnectionPool.Put(conn)
 	err = ur.UpdateVerification(user.Id, u)
 
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
-	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
