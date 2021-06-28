@@ -9,15 +9,6 @@ import (
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func Find(targetArr []primitive.ObjectID, id primitive.ObjectID) bool {
-	for _, foundId := range targetArr {
-		if foundId == id {
-			return true
-		}
-	}
-	return false
-}
-
 func GenerateNewBlockList(targetID primitive.ObjectID, blockList []primitive.ObjectID) ([]primitive.ObjectID, bool) {
 	userIsBlocked := false
 	newBlockList := make([]primitive.ObjectID, 0, len(blockList))
