@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"example.com/app/cache"
 	"example.com/app/domain"
 	"example.com/app/services"
@@ -28,11 +27,9 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	users, err := uh.UserService.GetAllUsers(u.Id, page, ctx, rdb, u.Username)
+	users, err := uh.UserService.GetAllUsers(u.Id, page, c.Context(), rdb, u.Username)
 
 	if err != nil {
 		cache.RedisCachePool.Put(rdb)
@@ -53,11 +50,9 @@ func (uh *UserHandler) GetAllBlockedUsers(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	users, err := uh.UserService.GetAllBlockedUsers(u.Id, rdb, ctx, u.Username)
+	users, err := uh.UserService.GetAllBlockedUsers(u.Id, rdb, c.Context(), u.Username)
 
 	if err != nil {
 		cache.RedisCachePool.Put(rdb)
@@ -65,6 +60,8 @@ func (uh *UserHandler) GetAllBlockedUsers(c *fiber.Ctx) error {
 	}
 
 	cache.RedisCachePool.Put(rdb)
+
+	c.Context().Done()
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
 }
 
@@ -80,7 +77,7 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 
 	user := util.CreateUser(createUserDto)
 
-	err = uh.UserService.CreateUser(user)
+	err = uh.UserService.CreateUser(user, c.Context())
 
 	if err != nil {
 		return c.Status(409).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
@@ -99,19 +96,17 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 	var data domain.UserDto
 
-	err = rdb.Get(ctx, util.GenerateKey(u.Username, "finduserbyusername"), &data)
+	err = rdb.Get(c.Context(), util.GenerateKey(u.Username, "finduserbyusername"), &data)
 
 	if err == nil {
 		cache.RedisCachePool.Put(rdb)
 		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
 	}
 
-	user, err := uh.UserService.GetUserByID(u.Id, rdb, ctx)
+	user, err := uh.UserService.GetUserByID(u.Id, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -128,12 +123,10 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 	username := c.Params("username")
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 	var data domain.UserDto
 
-	err := rdb.Get(ctx, util.GenerateKey(username, "finduserbyusername"), &data)
+	err := rdb.Get(c.Context(), util.GenerateKey(username, "finduserbyusername"), &data)
 
 	if err == nil {
 		fmt.Println("Found in cache in get user by username")
@@ -141,7 +134,7 @@ func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
 	}
 
-	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username), rdb, ctx)
+	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username), rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -175,11 +168,9 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UpdateProfileVisibility(u.Id, userDto, rdb, ctx)
+	err = uh.UserService.UpdateProfileVisibility(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -212,11 +203,9 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UpdateMessageAcceptance(u.Id, userDto, rdb, ctx)
+	err = uh.UserService.UpdateMessageAcceptance(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -248,11 +237,9 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UpdateCurrentBadge(u.Id, userDto, rdb, ctx)
+	err = uh.UserService.UpdateCurrentBadge(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -284,11 +271,9 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UpdateProfilePicture(u.Id, userDto, rdb, ctx)
+	err = uh.UserService.UpdateProfilePicture(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -320,11 +305,9 @@ func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UpdateProfileBackgroundPicture(u.Id, userDto, rdb, ctx)
+	err = uh.UserService.UpdateProfileBackgroundPicture(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -357,11 +340,9 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UpdateCurrentTagline(u.Id, userDto, rdb, ctx)
+	err = uh.UserService.UpdateCurrentTagline(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -419,11 +400,9 @@ func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.DeleteByID(u.Id, rdb, ctx, u.Username)
+	err = uh.UserService.DeleteByID(u.Id, rdb, c.Context(), u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -448,11 +427,9 @@ func (uh *UserHandler) BlockUser(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.BlockUser(u.Id, strings.ToLower(username), rdb, ctx, u.Username)
+	err = uh.UserService.BlockUser(u.Id, strings.ToLower(username), rdb, c.Context(), u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -477,11 +454,9 @@ func (uh *UserHandler) UnblockUser(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
 	}
 
-	ctx := context.TODO()
-
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 
-	err = uh.UserService.UnblockUser(u.Id, strings.ToLower(username), rdb, ctx, u.Username)
+	err = uh.UserService.UnblockUser(u.Id, strings.ToLower(username), rdb, c.Context(), u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

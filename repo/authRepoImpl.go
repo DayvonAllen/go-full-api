@@ -25,9 +25,16 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 	var login domain.Authentication
 	var user domain.User
 
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return nil, "", fmt.Errorf("error connecting to the DB")
+	}
+
 	if util.IsEmail(username) {
 		opts := options.FindOne()
-		err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"email",
+		err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"email",
 			strings.ToLower(username)}},opts).Decode(&user)
 
 		if err != nil {
@@ -35,7 +42,7 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 		}
 	} else {
 		opts := options.FindOne()
-		err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username",
+		err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username",
 			strings.ToLower(username)}},opts).Decode(&user)
 
 		if err != nil {
@@ -43,7 +50,7 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 		}
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
 		return nil, "", fmt.Errorf("error comparing password")
@@ -61,8 +68,16 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 }
 
 func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
+
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	var user domain.User
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -108,9 +123,16 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 }
 
 func(a AuthRepoImpl) ResetPassword(token, password string) error {
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	user := new(domain.User)
 	ur := new(UserRepoImpl)
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
@@ -134,9 +156,17 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 }
 
 func (a AuthRepoImpl) VerifyCode(code string) error{
+
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	var user domain.User
 	ur := new(UserRepoImpl)
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
 
 	if user.IsVerified {
 		return fmt.Errorf("user email already verified")

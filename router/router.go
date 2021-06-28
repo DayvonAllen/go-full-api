@@ -44,6 +44,7 @@ func SetupRoutes(app *fiber.App) {
 
 func Setup() *fiber.App {
 	app := fiber.New()
+
 	app.Use(cors.New(cors.Config{
 		ExposeHeaders: "Authorization",
 	}))

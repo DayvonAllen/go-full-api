@@ -29,7 +29,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
 			return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("Wrong Password")})
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("Authentication failure")})
 	}
 
 	signedToken := make([]byte, 0, 100)

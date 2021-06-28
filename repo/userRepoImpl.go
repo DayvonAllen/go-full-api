@@ -50,6 +50,12 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 		}
 	}
 
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to the DB")
+	}
+
 	findOptions := options.FindOptions{}
 	perPage := 10
 	pageNumber, err := strconv.Atoi(page)
@@ -61,7 +67,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	findOptions.SetLimit(int64(perPage))
 
 	// Get all users
-	cur, err := database.GetInstance().UserCollection.Find(ctx, bson.M{
+	cur, err := conn.UserCollection.Find(ctx, bson.M{
 		"profileIsViewable": true,
 		"$and": []interface{}{
 			bson.M{"_id": bson.M{"$ne": id}},
@@ -107,10 +113,16 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cac
 		}
 	}
 
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to the DB")
+	}
+
 	query := bson.M{"_id": bson.M{"$in": currentUser.BlockList}}
 
 	// Get all users
-	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), query)
+	cur, err := conn.UserCollection.Find(context.TODO(), query)
 
 	if err != nil {
 		return nil, fmt.Errorf("error processing data")
@@ -126,8 +138,15 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cac
 	return &u.userDtoList, nil
 }
 
-func (u UserRepoImpl) Create(user *domain.User) error {
-	cur, err := database.GetInstance().UserCollection.Find(context.TODO(), bson.M{
+func (u UserRepoImpl) Create(user *domain.User, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+	fmt.Println("ran")
+
+	cur, err := conn.UserCollection.Find(context.TODO(), bson.M{
 		"$or": []interface{}{
 			bson.M{"email": user.Email},
 			bson.M{"username": user.Username},
@@ -140,7 +159,7 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 	found := cur.Next(context.TODO())
 	if !found {
 		user.Id = primitive.NewObjectID()
-		_, err = database.GetInstance().UserCollection.InsertOne(context.TODO(), &user)
+		_, err = conn.UserCollection.InsertOne(context.TODO(), &user)
 
 		if err != nil {
 			return fmt.Errorf("error processing data")
@@ -175,7 +194,13 @@ func (u UserRepoImpl) Create(user *domain.User) error {
 }
 
 func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to the DB")
+	}
+
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
 
 	if err != nil {
 		// ErrNoDocuments means that the filter did not match any documents in the collection
@@ -207,7 +232,13 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx cont
 }
 
 func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
+	conn, err := database.ConnectToDB(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to the DB")
+	}
+
+	err = conn.UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
 		[]interface{}{
 		bson.M{"profileIsViewable": true,
 		},
@@ -242,22 +273,31 @@ func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx cont
 }
 
 func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*domain.UserDto, error) {
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to the DB")
+	}
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"tokenHash", user.TokenHash}, {"tokenExpiresAt", user.TokenExpiresAt}}}}
 
-	database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts)
 
 	return &u.userDto, nil
 }
 
 func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility, rdb *cache.Cache, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profileIsViewable", user.ProfileIsViewable}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -295,11 +335,15 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 }
 
 func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance, rdb *cache.Cache, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"acceptMessages", user.AcceptMessages}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -338,11 +382,16 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 }
 
 func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge, rdb *cache.Cache, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"currentBadgeUrl", user.CurrentBadgeUrl}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -381,11 +430,16 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 }
 
 func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture, rdb *cache.Cache, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profilePictureUrl", user.ProfilePictureUrl}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -423,11 +477,15 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 }
 
 func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture, rdb *cache.Cache, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profileBackgroundPictureUrl", user.ProfileBackgroundPictureUrl}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -465,11 +523,16 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 }
 
 func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline, rdb *cache.Cache, ctx context.Context) error {
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"currentTagLine", user.CurrentTagLine}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -507,11 +570,17 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 }
 
 func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"isVerified", user.IsVerified}}}}
 
-	err := database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -537,18 +606,30 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 }
 
 func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) error {
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"password", password}, {"tokenHash", ""}, {"tokenExpiresAt", 0}, {"updatedAt", time.Now()}}}}
 
-	database.GetInstance().UserCollection.FindOneAndUpdate(context.TODO(),
+	conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts)
 
 	return nil
 }
 
 func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-	cur, err := database.GetInstance().FlagCollection.Find(context.TODO(), bson.M{
+	ctx := context.TODO()
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
+	cur, err := conn.FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
 			bson.M{"flaggerID": flag.FlaggerID},
 			bson.M{"flaggedUsername": flag.FlaggedUsername},
@@ -561,7 +642,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 
 	if !cur.Next(context.TODO()) {
 		flag.Id = primitive.NewObjectID()
-		_, err = database.GetInstance().FlagCollection.InsertOne(context.TODO(), &flag)
+		_, err = conn.FlagCollection.InsertOne(context.TODO(), &flag)
 
 		if err != nil {
 			return err
@@ -570,7 +651,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		filter := bson.D{{"username", flag.FlaggedUsername}}
 		update := bson.M{"$push": bson.M{"flagCount": flag.Id}}
 
-		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
 		if err != nil {
 			return err
@@ -583,7 +664,13 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 }
 
 func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context, currentUsername string) error {
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
 		return fmt.Errorf("you can't block yourself")
@@ -609,7 +696,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
 
 	// set up for a transaction
-	session, err := database.GetInstance().StartSession()
+	session, err := conn.StartSession()
 
 	if err != nil {
 		panic(err)
@@ -623,7 +710,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 		filter := bson.D{{"_id", id}}
 		update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
 
-		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
 
 		if err != nil {
@@ -633,7 +720,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 		filter = bson.D{{"_id", u.userDto.Id}}
 		update = bson.M{"$push": bson.M{"blockByList": id}}
 
-		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
 
 		if err != nil {
@@ -669,7 +756,12 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 
 func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context, currentUsername string) error {
 
-	err := database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
 		return fmt.Errorf("you can't block or unblock yourself")
@@ -692,7 +784,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	currentUser := new(domain.UserDto)
 
 	// todo better query
-	err = database.GetInstance().UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
 
 	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Id, currentUser.BlockList)
 
@@ -706,7 +798,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
 
 	// set up for a transaction
-	session, err := database.GetInstance().StartSession()
+	session, err := conn.StartSession()
 
 	if err != nil {
 		panic(err)
@@ -719,7 +811,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 		filter := bson.D{{"_id", id}}
 		update := bson.M{"$set": bson.M{"blockList": blockList}}
 
-		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
 
 		if err != nil {
@@ -729,7 +821,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 		filter = bson.D{{"_id", u.userDto.Id}}
 		update = bson.M{"$set": bson.M{"blockByList": newBlockList}}
 
-		_, err = database.GetInstance().UserCollection.UpdateOne(context.TODO(),
+		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
 
 		if err != nil {
@@ -765,7 +857,11 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 }
 
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context, username string) error {
-	_, err := database.GetInstance().UserCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}})
+	conn, err := database.ConnectToDB(ctx)
+	if err != nil {
+		return fmt.Errorf("error connecting to the DB")
+	}
+	_, err = conn.UserCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}})
 	if err != nil {
 		return err
 	}
