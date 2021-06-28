@@ -50,17 +50,14 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 		}
 	}
 
-	conn, err := database.ConnectToDB(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	findOptions := options.FindOptions{}
 	perPage := 10
 	pageNumber, err := strconv.Atoi(page)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return nil, fmt.Errorf("page must be a number")
 	}
 	findOptions.SetSkip((int64(pageNumber) - 1) * int64(perPage))
@@ -77,17 +74,21 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	}, &findOptions)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return nil, err
 	}
 
 	var results []domain.UserDto
 	if err = cur.All(ctx, &results); err != nil {
+		database.MongoConnectionPool.Put(conn)
 		log.Fatal(err)
 	}
 
 	u.userDtoList = results
 
 	u.userResponse = domain.UserResponse{Users: u.userDtoList, CurrentPage: page}
+
+	database.MongoConnectionPool.Put(conn)
 
 	return &u.userResponse, nil
 }
@@ -113,11 +114,7 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cac
 		}
 	}
 
-	conn, err := database.ConnectToDB(ctx)
-
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	query := bson.M{"_id": bson.M{"$in": currentUser.BlockList}}
 
@@ -125,26 +122,24 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cac
 	cur, err := conn.UserCollection.Find(context.TODO(), query)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return nil, fmt.Errorf("error processing data")
 	}
 
 	var results []domain.UserDto
 	if err = cur.All(context.TODO(), &results); err != nil {
-		log.Fatal(err)
+		database.MongoConnectionPool.Put(conn)
+		panic(err)
 	}
 
 	u.userDtoList = results
 
+	database.MongoConnectionPool.Put(conn)
 	return &u.userDtoList, nil
 }
 
 func (u UserRepoImpl) Create(user *domain.User, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
-	fmt.Println("ran")
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	cur, err := conn.UserCollection.Find(context.TODO(), bson.M{
 		"$or": []interface{}{
@@ -154,6 +149,7 @@ func (u UserRepoImpl) Create(user *domain.User, ctx context.Context) error {
 	})
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("error processing data")
 	}
 	found := cur.Next(context.TODO())
@@ -162,6 +158,7 @@ func (u UserRepoImpl) Create(user *domain.User, ctx context.Context) error {
 		_, err = conn.UserCollection.InsertOne(context.TODO(), &user)
 
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return fmt.Errorf("error processing data")
 		}
 
@@ -173,36 +170,38 @@ func (u UserRepoImpl) Create(user *domain.User, ctx context.Context) error {
 			}
 		}()
 
+		database.MongoConnectionPool.Put(conn)
 		return nil
 	}
 	err = cur.Decode(&u.userDto)
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
 	err = cur.Close(context.TODO())
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
 	if u.userDto.Username == user.Username {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("username is taken")
 	}
 
+	database.MongoConnectionPool.Put(conn)
 	return fmt.Errorf("email is taken")
 }
 
 func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
-	conn, err := database.ConnectToDB(ctx)
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
 
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to the DB")
-	}
-
-	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&u.userDto)
-
-	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return nil, err
@@ -228,23 +227,21 @@ func (u UserRepoImpl) FindByID(id primitive.ObjectID, rdb *cache.Cache, ctx cont
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return &u.userDto, nil
 }
 
 func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx context.Context) (*domain.UserDto, error) {
-	conn, err := database.ConnectToDB(ctx)
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to the DB")
-	}
-
-	err = conn.UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
+	err := conn.UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
 		[]interface{}{
 		bson.M{"profileIsViewable": true,
 		},
 	}}).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return nil, fmt.Errorf("cannot find user")
@@ -269,15 +266,13 @@ func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx cont
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return &u.userDto, nil
 }
 
 func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*domain.UserDto, error) {
-	ctx := context.TODO()
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"tokenHash", user.TokenHash}, {"tokenExpiresAt", user.TokenExpiresAt}}}}
@@ -285,22 +280,22 @@ func (u UserRepoImpl) UpdateByID(id primitive.ObjectID, user *domain.User) (*dom
 	conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts)
 
+	database.MongoConnectionPool.Put(conn)
 	return &u.userDto, nil
 }
 
 func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility, rdb *cache.Cache, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profileIsViewable", user.ProfileIsViewable}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -331,22 +326,24 @@ func (u UserRepoImpl) UpdateProfileVisibility(id primitive.ObjectID, user *domai
 
 		return
 	}()
+
+	database.MongoConnectionPool.Put(conn)
+
 	return nil
 }
 
 func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domain.UpdateMessageAcceptance, rdb *cache.Cache, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"acceptMessages", user.AcceptMessages}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -378,20 +375,18 @@ func (u UserRepoImpl) UpdateMessageAcceptance(id primitive.ObjectID, user *domai
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.UpdateCurrentBadge, rdb *cache.Cache, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"currentBadgeUrl", user.CurrentBadgeUrl}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
@@ -426,23 +421,22 @@ func (u UserRepoImpl) UpdateCurrentBadge(id primitive.ObjectID, user *domain.Upd
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.UpdateProfilePicture, rdb *cache.Cache, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profilePictureUrl", user.ProfilePictureUrl}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -458,7 +452,6 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 	}()
 
 	go func() {
-
 		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 
@@ -473,22 +466,22 @@ func (u UserRepoImpl) UpdateProfilePicture(id primitive.ObjectID, user *domain.U
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user *domain.UpdateProfileBackgroundPicture, rdb *cache.Cache, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"profileBackgroundPictureUrl", user.ProfileBackgroundPictureUrl}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -504,7 +497,6 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 	}()
 
 	go func() {
-
 		fmt.Println(util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 		err := rdb.Delete(ctx, util.GenerateKey(u.userDto.Username, "finduserbyusername"))
 
@@ -519,23 +511,22 @@ func (u UserRepoImpl) UpdateProfileBackgroundPicture(id primitive.ObjectID, user
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.UpdateCurrentTagline, rdb *cache.Cache, ctx context.Context) error {
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"currentTagLine", user.CurrentTagLine}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -566,24 +557,22 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
-	ctx := context.TODO()
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
 	update := bson.D{{"$set", bson.D{{"isVerified", user.IsVerified}}}}
 
-	err = conn.UserCollection.FindOneAndUpdate(context.TODO(),
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts).Decode(&u.userDto)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -599,18 +588,16 @@ func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.Upd
 	}()
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) error {
-	ctx := context.TODO()
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	filter := bson.D{{"_id", id}}
@@ -619,15 +606,12 @@ func (u UserRepoImpl) UpdatePassword(id primitive.ObjectID, password string) err
 	conn.UserCollection.FindOneAndUpdate(context.TODO(),
 		filter, update, opts)
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
-	ctx := context.TODO()
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	cur, err := conn.FlagCollection.Find(context.TODO(), bson.M{
 		"$and": []interface{}{
@@ -637,6 +621,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 	})
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("error processing data")
 	}
 
@@ -645,6 +630,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		_, err = conn.FlagCollection.InsertOne(context.TODO(), &flag)
 
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return err
 		}
 
@@ -654,29 +640,30 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return err
 		}
 
+		database.MongoConnectionPool.Put(conn)
 		return nil
 	}
 
+	database.MongoConnectionPool.Put(conn)
 	return fmt.Errorf("you've already flagged this user")
 }
 
 func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context, currentUsername string) error {
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
-
-	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("you can't block yourself")
 	}
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return fmt.Errorf("user not found")
@@ -686,6 +673,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 
 	for _, foundId := range u.userDto.BlockByList {
 		if foundId == id {
+			database.MongoConnectionPool.Put(conn)
 			return fmt.Errorf("already blocked")
 		}
 	}
@@ -699,6 +687,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 	session, err := conn.StartSession()
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		panic(err)
 	}
 
@@ -714,6 +703,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 			filter, update)
 
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return nil, err
 		}
 
@@ -724,19 +714,22 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 			filter, update)
 
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return nil, err
 		}
+
+		database.MongoConnectionPool.Put(conn)
 		return nil, err
 	}
 
 	_, err = session.WithTransaction(context.Background(), callback, txnOpts)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("failed to block user")
 	}
 
 	go func() {
-
 		fmt.Println(util.GenerateKey(currentUsername, "finduserbyusername"))
 		err := rdb.Delete(ctx, util.GenerateKey(currentUsername, "finduserbyusername"))
 
@@ -751,23 +744,23 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *cache.Cache, ctx context.Context, currentUsername string) error {
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
-	conn, err := database.ConnectToDB(ctx)
-	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
-
-	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.userDto)
 
 	if id == u.userDto.Id {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("you can't block or unblock yourself")
 	}
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
+
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return fmt.Errorf("user not found")
@@ -778,6 +771,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	newBlockList, userIsBlocked := util.GenerateNewBlockList(id, u.userDto.BlockByList)
 
 	if !userIsBlocked {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("this user is not blocked")
 	}
 
@@ -789,6 +783,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Id, currentUser.BlockList)
 
 	if !userIsBlocked {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("this user is not blocked")
 	}
 
@@ -801,6 +796,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	session, err := conn.StartSession()
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		panic(err)
 	}
 
@@ -815,6 +811,7 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 			filter, update)
 
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return nil, err
 		}
 
@@ -825,20 +822,22 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 			filter, update)
 
 		if err != nil {
+			database.MongoConnectionPool.Put(conn)
 			return nil, err
 		}
 
+		database.MongoConnectionPool.Put(conn)
 		return nil, err
 	}
 
 	_, err = session.WithTransaction(context.Background(), callback, txnOpts)
 
 	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("failed to unblock user")
 	}
 
 	go func() {
-
 		fmt.Println(util.GenerateKey(currentUsername, "finduserbyusername"))
 		err := rdb.Delete(ctx, util.GenerateKey(currentUsername, "finduserbyusername"))
 
@@ -853,16 +852,17 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 		return
 	}()
 
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context, username string) error {
-	conn, err := database.ConnectToDB(ctx)
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+
+	_, err := conn.UserCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}})
+
 	if err != nil {
-		return fmt.Errorf("error connecting to the DB")
-	}
-	_, err = conn.UserCollection.DeleteOne(context.TODO(), bson.D{{"_id", id}})
-	if err != nil {
+		database.MongoConnectionPool.Put(conn)
 		return err
 	}
 
@@ -876,7 +876,6 @@ func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, rdb *cache.Cache, ctx co
 	}()
 
 	go func() {
-
 		fmt.Println(util.GenerateKey(username, "finduserbyusername"))
 		err := rdb.Delete(ctx, util.GenerateKey(username, "finduserbyusername"))
 
@@ -890,6 +889,8 @@ func (u UserRepoImpl) DeleteByID(id primitive.ObjectID, rdb *cache.Cache, ctx co
 
 		return
 	}()
+
+	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 

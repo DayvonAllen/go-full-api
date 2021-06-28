@@ -15,7 +15,7 @@ type Connection struct {
 	*mongo.Database
 }
 
-func ConnectToDB(ctx context.Context) (*Connection,error) {
+func ConnectToDB() (*Connection,error) {
 	p := config.Config("DB_PORT")
 	n := config.Config("DB_NAME")
 	h := config.Config("DB_HOST")
