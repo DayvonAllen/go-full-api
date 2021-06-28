@@ -93,7 +93,7 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	return &u.userResponse, nil
 }
 
-func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cache, ctx context.Context, username string) (*[]domain.UserDto, error) {
+func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID, rdb *cache.Cache, ctx context.Context, username string) (*[]domain.UserDto, error) {
 	var data domain.UserDto
 
 	err := rdb.Get(ctx, util.GenerateKey(username, "finduserbyusername"), &data)
@@ -138,7 +138,7 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID,  rdb *cache.Cac
 	return &u.userDtoList, nil
 }
 
-func (u UserRepoImpl) Create(user *domain.User, ctx context.Context) error {
+func (u UserRepoImpl) Create(user *domain.User) error {
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	cur, err := conn.UserCollection.Find(context.TODO(), bson.M{
@@ -235,7 +235,7 @@ func (u UserRepoImpl) FindByUsername(username string, rdb *cache.Cache, ctx cont
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 
 	err := conn.UserCollection.FindOne(context.TODO(), bson.M{"username": username, "$and":
-		[]interface{}{
+	[]interface{}{
 		bson.M{"profileIsViewable": true,
 		},
 	}}).Decode(&u.userDto)

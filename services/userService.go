@@ -15,7 +15,7 @@ import (
 type UserService interface {
 	GetAllUsers(primitive.ObjectID, string, context.Context, *cache2.Cache, string) (*domain.UserResponse, error)
 	GetAllBlockedUsers(primitive.ObjectID, *cache2.Cache, context.Context, string) (*[]domain.UserDto, error)
-	CreateUser(*domain.User, context.Context) error
+	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	GetUserByUsername(string, *cache2.Cache, context.Context) (*domain.UserDto, error)
 	UpdateProfileVisibility(primitive.ObjectID, *domain.UpdateProfileVisibility, *cache2.Cache, context.Context) error
@@ -53,7 +53,7 @@ func (s DefaultUserService) GetAllBlockedUsers(id primitive.ObjectID, rdb *cache
 	return  u, nil
 }
 
-func (s DefaultUserService) CreateUser(user *domain.User, ctx context.Context) error {
+func (s DefaultUserService) CreateUser(user *domain.User) error {
 	user.Username = strings.ToLower(user.Username)
 	user.Email = strings.ToLower(user.Email)
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -69,7 +69,7 @@ func (s DefaultUserService) CreateUser(user *domain.User, ctx context.Context) e
 	hash := h + "-" + string(signedHash)
 	user.VerificationCode = hash
 
-	err = s.repo.Create(user, ctx)
+	err = s.repo.Create(user)
 	if err != nil {
 		return err
 	}

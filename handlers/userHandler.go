@@ -77,7 +77,7 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 
 	user := util.CreateUser(createUserDto)
 
-	err = uh.UserService.CreateUser(user, c.Context())
+	err = uh.UserService.CreateUser(user)
 
 	if err != nil {
 		return c.Status(409).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
