@@ -28,15 +28,14 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	users, err := uh.UserService.GetAllUsers(u.Id, page, c.Context(), rdb, u.Username)
 
 	if err != nil {
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
 }
 
@@ -51,17 +50,14 @@ func (uh *UserHandler) GetAllBlockedUsers(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	users, err := uh.UserService.GetAllBlockedUsers(u.Id, rdb, c.Context(), u.Username)
 
 	if err != nil {
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	cache.RedisCachePool.Put(rdb)
-
-	c.Context().Done()
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": users})
 }
 
@@ -97,12 +93,13 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
+
 	var data domain.UserDto
 
 	err = rdb.Get(c.Context(), util.GenerateKey(u.Username, "finduserbyusername"), &data)
 
 	if err == nil {
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
 	}
 
@@ -110,13 +107,10 @@ func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
 }
 
@@ -124,13 +118,14 @@ func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 	username := c.Params("username")
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
+
 	var data domain.UserDto
 
 	err := rdb.Get(c.Context(), util.GenerateKey(username, "finduserbyusername"), &data)
 
 	if err == nil {
 		fmt.Println("Found in cache in get user by username")
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
 	}
 
@@ -138,14 +133,11 @@ func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
 }
 
@@ -169,15 +161,14 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UpdateProfileVisibility(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
@@ -204,15 +195,15 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UpdateMessageAcceptance(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
+
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
@@ -238,15 +229,14 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UpdateCurrentBadge(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
@@ -272,15 +262,14 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UpdateProfilePicture(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
@@ -306,18 +295,16 @@ func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UpdateProfileBackgroundPicture(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
@@ -341,18 +328,16 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UpdateCurrentTagline(u.Id, userDto, rdb, c.Context())
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
@@ -401,18 +386,16 @@ func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.DeleteByID(u.Id, rdb, c.Context(), u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
@@ -428,18 +411,16 @@ func (uh *UserHandler) BlockUser(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.BlockUser(u.Id, strings.ToLower(username), rdb, c.Context(), u.Username)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			cache.RedisCachePool.Put(rdb)
 			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 		}
-		cache.RedisCachePool.Put(rdb)
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	cache.RedisCachePool.Put(rdb)
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
@@ -455,6 +436,7 @@ func (uh *UserHandler) UnblockUser(c *fiber.Ctx) error {
 	}
 
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.UnblockUser(u.Id, strings.ToLower(username), rdb, c.Context(), u.Username)
 

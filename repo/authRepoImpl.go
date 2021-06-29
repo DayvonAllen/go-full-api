@@ -26,6 +26,7 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 	var user domain.User
 
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	database.MongoConnectionPool.Put(conn)
 
 	if util.IsEmail(username) {
 		opts := options.FindOne()
@@ -33,7 +34,6 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 			strings.ToLower(username)}},opts).Decode(&user)
 
 		if err != nil {
-			database.MongoConnectionPool.Put(conn)
 			return nil, "", fmt.Errorf("error finding by email")
 		}
 	} else {
@@ -42,7 +42,6 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 			strings.ToLower(username)}},opts).Decode(&user)
 
 		if err != nil {
-			database.MongoConnectionPool.Put(conn)
 			return nil, "", fmt.Errorf("error finding by username")
 		}
 	}
@@ -50,31 +49,28 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		return nil, "", fmt.Errorf("error comparing password")
 	}
 
 	token, err := login.GenerateJWT(user)
 
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		return nil, "", fmt.Errorf("error generating token")
 	}
 
 	userDto := domain.UserMapper(&user)
 
-	database.MongoConnectionPool.Put(conn)
 	return userDto, token, nil
 }
 
 func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
 
 	var user domain.User
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"email", strings.ToLower(email)}}).Decode(&user)
 
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return fmt.Errorf("email %v was not found", email)
@@ -89,14 +85,12 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 		s, err := a.SignToken([]byte(h))
 
 		if err != nil {
-			database.MongoConnectionPool.Put(conn)
 			return err
 		}
 
 		expiration, err := strconv.Atoi(config.Config("PASSWORD_RESET_TOKEN_EXPIRATION"))
 
 		if err != nil {
-			database.MongoConnectionPool.Put(conn)
 			return err
 		}
 
@@ -104,7 +98,6 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 		user.TokenHash = hash
 		user.TokenExpiresAt = time.Now().Add(time.Duration(expiration) * time.Minute).Unix()
 		ur := new(UserRepoImpl)
-		database.MongoConnectionPool.Put(conn)
 		_, err = ur.UpdateByID(user.Id, &user)
 	}
 
@@ -113,18 +106,17 @@ func(a AuthRepoImpl) ResetPasswordQuery(email string) error {
 
 	fmt.Println(user.TokenHash)
 
-	database.MongoConnectionPool.Put(conn)
 	return nil
 }
 
 func(a AuthRepoImpl) ResetPassword(token, password string) error {
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
 
 	user := new(domain.User)
 	ur := new(UserRepoImpl)
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"tokenHash", token}}).Decode(&user)
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return fmt.Errorf("no token found")
@@ -133,11 +125,9 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 	}
 
 	if user.TokenExpiresAt < time.Now().Unix() {
-		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("token has expired")
 	}
 
-	database.MongoConnectionPool.Put(conn)
 	// update password logic
 	err = ur.UpdatePassword(user.Id, password)
 
@@ -149,20 +139,18 @@ func(a AuthRepoImpl) ResetPassword(token, password string) error {
 }
 
 func (a AuthRepoImpl) VerifyCode(code string) error{
-
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
 
 	var user domain.User
 	ur := new(UserRepoImpl)
 	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"verificationCode", code}}).Decode(&user)
 
 	if user.IsVerified {
-		database.MongoConnectionPool.Put(conn)
 		return fmt.Errorf("user email already verified")
 	}
 
 	if err != nil {
-		database.MongoConnectionPool.Put(conn)
 		// ErrNoDocuments means that the filter did not match any documents in the collection
 		if err == mongo.ErrNoDocuments {
 			return fmt.Errorf("no token found")
@@ -170,11 +158,11 @@ func (a AuthRepoImpl) VerifyCode(code string) error{
 		return err
 	}
 
+
 	u := new(domain.UpdateVerification)
 
 	u.IsVerified = true
 
-	database.MongoConnectionPool.Put(conn)
 	err = ur.UpdateVerification(user.Id, u)
 
 	if err != nil {

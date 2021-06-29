@@ -92,6 +92,6 @@ type UserDto struct {
 }
 
 type UserResponse struct {
-	Users []UserDto
+	Users *[]UserDto
 	CurrentPage string
 }
