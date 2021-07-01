@@ -75,12 +75,10 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 		return nil, err
 	}
 
-	var results []domain.UserDto
-	if err = cur.All(ctx, &results); err != nil {
+
+	if err = cur.All(ctx, &u.userDtoList); err != nil {
 		log.Fatal(err)
 	}
-
-	u.userDtoList = results
 
 	u.userResponse = domain.UserResponse{Users: &u.userDtoList, CurrentPage: page}
 
