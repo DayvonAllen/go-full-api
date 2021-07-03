@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// User todo validate struct
 type User struct {
 	Id        primitive.ObjectID `bson:"_id" json:"id"`
 	Username  string             `bson:"username" json:"username"`
@@ -18,7 +19,7 @@ type User struct {
 	UnlockedBadgesUrls  []string `bson:"unlockedBadgesUrls" json:"unlockedBadgesUrls"`
 	BlockList []primitive.ObjectID	`bson:"blockList" json:"blockList"`
 	BlockByList []primitive.ObjectID `bson:"blockByList" json:"blockByList"`
-	FlagCount []primitive.ObjectID			 `bson:"flagCount" json:"flagCount"`
+	FlagCount []primitive.ObjectID	`bson:"flagCount" json:"flagCount"`
 	ProfileIsViewable  bool      `bson:"profileIsViewable" json:"profileIsViewable"`
 	IsLocked  bool               `bson:"isLocked" json:"-"`
 	IsVerified  bool             `bson:"isVerified" json:"isVerified"`

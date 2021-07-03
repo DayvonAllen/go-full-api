@@ -18,16 +18,19 @@ type Authentication struct {
 	Username string `bson:"username" json:"username"`
 }
 
+// LoginDetails todo validate struct
 type LoginDetails struct {
 	Email string `bson:"email" json:"email"`
 	//Username string `bson:"username" json:"username"`
 	Password string `bson:"password" json:"password"`
 }
 
+// ResetPasswordQuery todo validate struct
 type ResetPasswordQuery struct {
 	Email string `bson:"email" json:"email"`
 }
 
+// ResetPassword todo validate struct
 type ResetPassword struct {
 	Password string `bson:"password" json:"password"`
 }
