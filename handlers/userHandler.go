@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"example.com/app/cache"
 	"example.com/app/domain"
 	"example.com/app/services"
@@ -8,6 +9,7 @@ import (
 	"fmt"
 	cache2 "github.com/go-redis/cache/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
 )
@@ -20,6 +22,11 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 	token := c.Get("Authorization")
 	page := c.Query("page", "1")
 
+	span := opentracing.GlobalTracer().StartSpan("Get All users: GET /users")
+	defer span.Finish()
+
+	ctx := opentracing.ContextWithSpan(context.Background(), span)
+
 	var auth domain.Authentication
 	u, loggedIn, err := auth.IsLoggedIn(token)
 
@@ -30,7 +37,7 @@ func (uh *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
 	defer cache.RedisCachePool.Put(rdb)
 
-	users, err := uh.UserService.GetAllUsers(u.Id, page, c.Context(), rdb, u.Username)
+	users, err := uh.UserService.GetAllUsers(u.Id, page, ctx, rdb, u.Username, span)
 
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})

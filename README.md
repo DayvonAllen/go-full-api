@@ -16,6 +16,8 @@
 4. Run the app:
    - Execute this command from the root folder in the terminal `go run main.go`
    - Root Folder is `go-full-api`
+5. Jaeger Metrics and Performance Tracking:
+    - `http://localhost:16686/search`
 ---
 
 ## Routes

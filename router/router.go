@@ -12,6 +12,7 @@ import (
 )
 
 
+
 func SetupRoutes(app *fiber.App) {
 	uh := handlers.UserHandler{UserService: services.NewUserService(repo.NewUserRepoImpl())}
 	ah := handlers.AuthHandler{AuthService: services.NewAuthService(repo.NewAuthRepoImpl())}
@@ -50,5 +51,6 @@ func Setup() *fiber.App {
 	}))
 
 	SetupRoutes(app)
+
 	return app
 }

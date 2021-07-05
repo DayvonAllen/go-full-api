@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"regexp"
 	"strings"
@@ -33,7 +32,6 @@ func GenerateKey(value string, query string) string {
 	var key strings.Builder
 
 	for _, v := range strings.Fields(value) {
-		fmt.Println(v)
 		key.WriteString(v)
 	}
 

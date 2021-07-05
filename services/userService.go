@@ -6,6 +6,7 @@ import (
 	"example.com/app/repo"
 	cache2 "github.com/go-redis/cache/v8"
 	"github.com/gofiber/fiber/v2/utils"
+	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
@@ -13,7 +14,7 @@ import (
 )
 
 type UserService interface {
-	GetAllUsers(primitive.ObjectID, string, context.Context, *cache2.Cache, string) (*domain.UserResponse, error)
+	GetAllUsers(primitive.ObjectID, string, context.Context, *cache2.Cache, string, opentracing.Span) (*domain.UserResponse, error)
 	GetAllBlockedUsers(primitive.ObjectID, *cache2.Cache, context.Context, string) (*[]domain.UserDto, error)
 	CreateUser(*domain.User) error
 	GetUserByID(primitive.ObjectID, *cache2.Cache, context.Context) (*domain.UserDto, error)
@@ -37,8 +38,10 @@ type DefaultUserService struct {
 	repo repo.UserRepo
 }
 
-func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx context.Context, rdb *cache2.Cache, username string) (*domain.UserResponse, error) {
-	u, err := s.repo.FindAll(id, page, ctx, rdb, username)
+func (s DefaultUserService) GetAllUsers(id primitive.ObjectID, page string, ctx context.Context, rdb *cache2.Cache, username string, span opentracing.Span) (*domain.UserResponse, error) {
+	//childSpan := opentracing.StartSpan("child", opentracing.ChildOf(span.Context()))
+	//defer childSpan.Finish()
+	u, err := s.repo.FindAll(id, page, ctx, rdb, username, span)
 	if err != nil {
 		return nil, err
 	}

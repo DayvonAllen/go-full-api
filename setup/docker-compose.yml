@@ -24,3 +24,9 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - 16686:16686
+      - 14269:14269

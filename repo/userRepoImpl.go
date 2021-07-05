@@ -8,6 +8,7 @@ import (
 	"example.com/app/util"
 	"fmt"
 	"github.com/go-redis/cache/v8"
+	"github.com/opentracing/opentracing-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,8 +28,9 @@ type UserRepoImpl struct {
 	userResponse domain.UserResponse
 }
 
-func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context, rdb *cache.Cache, username string) (*domain.UserResponse, error) {
-
+func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context, rdb *cache.Cache, username string, span opentracing.Span) (*domain.UserResponse, error) {
+	childSpan, _ := opentracing.StartSpanFromContext(ctx,"child2")
+	defer childSpan.Finish()
 	var data domain.UserDto
 
 	err := rdb.Get(ctx, util.GenerateKey(username, "finduserbyusername"), &data)
