@@ -179,7 +179,7 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
@@ -213,7 +213,7 @@ func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
@@ -246,7 +246,7 @@ func (uh *UserHandler) UpdateCurrentBadge(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
@@ -279,7 +279,7 @@ func (uh *UserHandler) UpdateProfilePicture(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
@@ -312,7 +312,7 @@ func (uh *UserHandler) UpdateProfileBackgroundPicture(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
@@ -345,7 +345,7 @@ func (uh *UserHandler) UpdateCurrentTagline(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UpdateFlagCount(c *fiber.Ctx) error {
@@ -379,7 +379,7 @@ func (uh *UserHandler) UpdateFlagCount(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
@@ -428,7 +428,7 @@ func (uh *UserHandler) BlockUser(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
 func (uh *UserHandler) UnblockUser(c *fiber.Ctx) error {
@@ -453,5 +453,5 @@ func (uh *UserHandler) UnblockUser(c *fiber.Ctx) error {
 		}
 		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }

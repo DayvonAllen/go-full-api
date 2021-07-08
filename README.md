@@ -19,7 +19,6 @@
 5. Jaeger Metrics and Performance Tracking:
     - `http://localhost:16686/search`
 ---
-
 ## Routes
 - Get All users:
   - `GET:http://localhost:8080/users?page=1`(protected, needs token. Gives 10 documents at a time)
