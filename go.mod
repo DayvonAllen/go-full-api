@@ -10,7 +10,7 @@ require (
 	github.com/go-redis/redis/v8 v8.10.0
 	github.com/gofiber/fiber/v2 v2.13.0
 	github.com/joho/godotenv v1.3.0
-	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/sendgrid/rest v2.6.3+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
