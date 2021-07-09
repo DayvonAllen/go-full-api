@@ -80,6 +80,9 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 
 	user := util.CreateUser(createUserDto)
 
+	user.Following = make([]string,0, 0)
+	user.Followers = make([]string,0, 0)
+
 	err = uh.UserService.CreateUser(user)
 
 	if err != nil {
@@ -396,6 +399,58 @@ func (uh *UserHandler) DeleteByID(c *fiber.Ctx) error {
 	defer cache.RedisCachePool.Put(rdb)
 
 	err = uh.UserService.DeleteByID(u.Id, rdb, c.Context(), u.Username)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
+func (uh *UserHandler) FollowUser(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
+	}
+
+	currentUsername := c.Params("username")
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
+
+	err = uh.UserService.FollowUser(strings.ToLower(currentUsername), u.Username, rdb)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
+func (uh *UserHandler) UnfollowUser(c *fiber.Ctx) error {
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
+	}
+
+	currentUsername := c.Params("username")
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
+
+	err = uh.UserService.UnfollowUser(strings.ToLower(currentUsername), u.Username, rdb)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {

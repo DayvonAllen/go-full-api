@@ -22,6 +22,8 @@ type UserRepo interface {
 	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture, *cache2.Cache, context.Context) error
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline, *cache2.Cache, context.Context)  error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
+	FollowUser(username string, currentUser string, rdb *cache2.Cache) error
+	UnfollowUser(username string, currentUser string, rdb *cache2.Cache) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
 	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error

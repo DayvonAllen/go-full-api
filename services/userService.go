@@ -28,6 +28,8 @@ type UserService interface {
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
+	FollowUser(username string, currentUser string, rdb *cache2.Cache) error
+	UnfollowUser(username string, currentUser string, rdb *cache2.Cache) error
 	BlockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error
 	UnblockUser(primitive.ObjectID, string, *cache2.Cache, context.Context, string) error
 	DeleteByID(primitive.ObjectID, *cache2.Cache, context.Context, string) error
@@ -175,6 +177,22 @@ func (s DefaultUserService) UpdateFlagCount(flag *domain.Flag) error {
 
 func (s DefaultUserService) DeleteByID(id primitive.ObjectID, rdb *cache2.Cache, ctx context.Context, username string) error {
 	err := s.repo.DeleteByID(id, rdb, ctx, username)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s DefaultUserService) FollowUser(username string, currentUser string, rdb *cache2.Cache) error {
+	err := s.repo.FollowUser(username, currentUser, rdb)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s DefaultUserService) UnfollowUser(username string, currentUser string, rdb *cache2.Cache) error {
+	err := s.repo.UnfollowUser(username, currentUser, rdb)
 	if err != nil {
 		return err
 	}

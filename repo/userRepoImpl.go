@@ -29,7 +29,7 @@ type UserRepoImpl struct {
 }
 
 func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Context, rdb *cache.Cache, username string, span opentracing.Span) (*domain.UserResponse, error) {
-	childSpan, _ := opentracing.StartSpanFromContext(ctx,"child2")
+	childSpan, _ := opentracing.StartSpanFromContext(ctx, "child2")
 	defer childSpan.Finish()
 	var data domain.UserDto
 
@@ -51,7 +51,6 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 	defer database.MongoConnectionPool.Put(conn)
-
 
 	findOptions := options.FindOptions{}
 	perPage := 10
@@ -76,7 +75,6 @@ func (u UserRepoImpl) FindAll(id primitive.ObjectID, page string, ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-
 
 	if err = cur.All(ctx, &u.userDtoList); err != nil {
 		log.Fatal(err)
@@ -773,6 +771,194 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 		}
 
 		fmt.Println("Removed from cache, unblock user")
+
+		return
+	}()
+
+	return nil
+}
+
+func (u UserRepoImpl) FollowUser(username string, currentUser string, rdb *cache.Cache) error {
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
+
+	fmt.Println(username)
+	fmt.Println(currentUser)
+
+	// sets mongo's read and write concerns
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+
+	// set up for a transaction
+	session, err := conn.StartSession()
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer session.EndSession(context.Background())
+
+	var user = new(domain.User)
+	callback := func(sessionContext mongo.SessionContext) (interface{}, error) {
+		filter := bson.D{{"username", currentUser}}
+		update := bson.M{"$push": bson.M{"following": username}}
+
+		_, err := conn.UserCollection.UpdateOne(context.TODO(), filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = conn.UserCollection.FindOne(context.TODO(), filter).Decode(&u.user)
+
+		if err != nil {
+			return nil, err
+		}
+
+		filter = bson.D{{"username", username}}
+		update = bson.M{"$push": bson.M{"followers": currentUser}, "$inc": bson.M{"followerCount": 1}}
+
+		_, err = conn.UserCollection.UpdateOne(context.TODO(), filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = conn.UserCollection.FindOne(context.TODO(), filter).Decode(&user)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, err
+	}
+
+	_, err = session.WithTransaction(context.Background(), callback, txnOpts)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(u.user)
+	fmt.Println(user)
+
+	go func() {
+		err := events.HandleKafkaMessage(err, &u.user, 200)
+		if err != nil {
+			return
+		}
+	}()
+	go func() {
+		err := events.HandleKafkaMessage(err, user, 200)
+		if err != nil {
+			return
+		}
+	}()
+
+	go func() {
+		err := rdb.Delete(context.TODO(), util.GenerateKey(currentUser, "finduserbyusername"))
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, follow user")
+
+		return
+	}()
+
+	return nil
+}
+
+func (u UserRepoImpl) UnfollowUser(username string, currentUser string, rdb *cache.Cache) error {
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
+
+	// sets mongo's read and write concerns
+	wc := writeconcern.New(writeconcern.WMajority())
+	rc := readconcern.Snapshot()
+	txnOpts := options.Transaction().SetWriteConcern(wc).SetReadConcern(rc)
+
+	// set up for a transaction
+	session, err := conn.StartSession()
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer session.EndSession(context.Background())
+
+	var user = new(domain.User)
+	callback := func(sessionContext mongo.SessionContext) (interface{}, error) {
+		filter := bson.D{{"username", currentUser}}
+		update := bson.M{"$pull": bson.M{"following": username}}
+
+		_, err := conn.UserCollection.UpdateOne(context.TODO(), filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = conn.UserCollection.FindOne(context.TODO(), filter).Decode(&u.user)
+
+		if err != nil {
+			return nil, err
+		}
+
+		filter = bson.D{{"username", username}}
+
+		err = conn.UserCollection.FindOne(context.TODO(), filter).Decode(&user)
+
+		if err != nil {
+			return nil, err
+		}
+
+		update = bson.M{"$pull": bson.M{"followers": currentUser}, "$set": bson.M{"followerCount": user.FollowerCount - 1}}
+
+		_, err = conn.UserCollection.UpdateOne(context.TODO(), filter, update)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = conn.UserCollection.FindOne(context.TODO(), filter).Decode(&user)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, err
+	}
+
+	_, err = session.WithTransaction(context.Background(), callback, txnOpts)
+
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		err := events.HandleKafkaMessage(err, &u.user, 200)
+		if err != nil {
+			return
+		}
+	}()
+
+	go func() {
+		err := events.HandleKafkaMessage(err, user, 200)
+		if err != nil {
+			return
+		}
+	}()
+
+	go func() {
+		err := rdb.Delete(context.TODO(), util.GenerateKey(currentUser, "finduserbyusername"))
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, follow user")
 
 		return
 	}()

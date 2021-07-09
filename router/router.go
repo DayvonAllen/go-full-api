@@ -40,6 +40,8 @@ func SetupRoutes(app *fiber.App) {
 	user.Put("/current-tagline", uh.UpdateCurrentTagline)
 	user.Put("/block/:username", uh.BlockUser)
 	user.Put("/unblock/:username", uh.UnblockUser)
+	user.Put("/follow/:username", uh.FollowUser)
+	user.Put("/unfollow/:username", uh.UnfollowUser)
 	user.Delete("/delete", uh.DeleteByID)
 }
 
