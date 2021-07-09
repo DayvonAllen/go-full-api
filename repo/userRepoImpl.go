@@ -958,7 +958,7 @@ func (u UserRepoImpl) UnfollowUser(username string, currentUser string, rdb *cac
 			panic(err)
 		}
 
-		fmt.Println("Removed from cache, follow user")
+		fmt.Println("Removed from cache, unfollow user")
 
 		return
 	}()
