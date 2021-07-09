@@ -82,6 +82,7 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 
 	user.Following = make([]string,0, 0)
 	user.Followers = make([]string,0, 0)
+	user.DisplayFollowerCount = true
 
 	err = uh.UserService.CreateUser(user)
 
