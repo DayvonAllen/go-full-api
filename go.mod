@@ -8,7 +8,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/cache/v8 v8.4.1
 	github.com/go-redis/redis/v8 v8.10.0
-	github.com/gofiber/fiber/v2 v2.13.0
+	github.com/gofiber/fiber/v2 v2.14.0
 	github.com/joho/godotenv v1.3.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/sendgrid/rest v2.6.3+incompatible // indirect
