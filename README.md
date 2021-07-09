@@ -66,3 +66,8 @@
   - `PUT:http://localhost:8080/users/unblock/<username of user you want to unblock>`
 - Delete current user account: (protected, needs token)
   - `DELETE:http://localhost:8080/users/delete`
+- Follow User:
+    - `PUT:http://localhost:8080/users/follow/<username>`
+- Unfollow User:
+    - `PUT:http://localhost:8080/users/unfollow/<username>`
+ ---   
