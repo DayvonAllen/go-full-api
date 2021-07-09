@@ -782,8 +782,24 @@ func (u UserRepoImpl) FollowUser(username string, currentUser string, rdb *cache
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 	defer database.MongoConnectionPool.Put(conn)
 
-	fmt.Println(username)
-	fmt.Println(currentUser)
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUser}}).Decode(&u.user)
+
+	if err != nil {
+		return fmt.Errorf("error processing data")
+	}
+
+	query := bson.M{"username": bson.M{"$in": u.user.Following}}
+
+	// Get all users
+	cur, err := conn.UserCollection.Find(context.TODO(), query)
+
+	if err != nil {
+		return fmt.Errorf("error processing data")
+	}
+
+	if cur.Next(context.TODO()){
+		return fmt.Errorf("you are already following this user")
+	}
 
 	// sets mongo's read and write concerns
 	wc := writeconcern.New(writeconcern.WMajority())
@@ -840,9 +856,6 @@ func (u UserRepoImpl) FollowUser(username string, currentUser string, rdb *cache
 		return err
 	}
 
-	fmt.Println(u.user)
-	fmt.Println(user)
-
 	go func() {
 		err := events.HandleKafkaMessage(err, &u.user, 200)
 		if err != nil {
@@ -874,6 +887,25 @@ func (u UserRepoImpl) FollowUser(username string, currentUser string, rdb *cache
 func (u UserRepoImpl) UnfollowUser(username string, currentUser string, rdb *cache.Cache) error {
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 	defer database.MongoConnectionPool.Put(conn)
+
+	err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUser}}).Decode(&u.user)
+
+	if err != nil {
+		return fmt.Errorf("error processing data")
+	}
+
+	query := bson.M{"username": bson.M{"$in": u.user.Following}}
+
+	// Get all users
+	cur, err := conn.UserCollection.Find(context.TODO(), query)
+
+	if err != nil {
+		return fmt.Errorf("error processing data")
+	}
+
+	if !cur.Next(context.TODO()){
+		return fmt.Errorf("you are not following this user")
+	}
 
 	// sets mongo's read and write concerns
 	wc := writeconcern.New(writeconcern.WMajority())
