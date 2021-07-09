@@ -511,6 +511,49 @@ func (u UserRepoImpl) UpdateCurrentTagline(id primitive.ObjectID, user *domain.U
 	return nil
 }
 
+func (u UserRepoImpl) UpdateDisplayFollowerCount(id primitive.ObjectID, user *domain.UpdateDisplayFollowerCount, rdb *cache.Cache) error{
+	conn := database.MongoConnectionPool.Get().(*database.Connection)
+	defer database.MongoConnectionPool.Put(conn)
+
+	fmt.Println(user)
+
+	opts := options.FindOneAndUpdate().SetUpsert(true)
+	filter := bson.D{{"_id", id}}
+	update := bson.D{{"$set", bson.D{{"displayFollowerCount", user.DisplayFollowerCount}}}}
+
+	err := conn.UserCollection.FindOneAndUpdate(context.TODO(),
+		filter, update, opts).Decode(&u.userDto)
+
+	if err != nil {
+		return err
+	}
+
+	u.userDto.DisplayFollowerCount = user.DisplayFollowerCount
+
+	mappedUser := domain.UserDtoMapper(u.userDto)
+
+	go func() {
+		err := events.HandleKafkaMessage(err, mappedUser, 200)
+		if err != nil {
+			return
+		}
+	}()
+
+	go func() {
+		err := rdb.Delete(context.TODO(), util.GenerateKey(u.userDto.Username, "finduserbyusername"))
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Removed from cache, update current tag")
+
+		return
+	}()
+
+	return nil
+}
+
 func (u UserRepoImpl) UpdateVerification(id primitive.ObjectID, user *domain.UpdateVerification) error {
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 	defer database.MongoConnectionPool.Put(conn)

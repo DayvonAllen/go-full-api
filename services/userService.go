@@ -25,6 +25,7 @@ type UserService interface {
 	UpdateProfilePicture(primitive.ObjectID, *domain.UpdateProfilePicture, *cache2.Cache, context.Context) error
 	UpdateProfileBackgroundPicture(primitive.ObjectID, *domain.UpdateProfileBackgroundPicture, *cache2.Cache, context.Context) error
 	UpdateCurrentTagline(primitive.ObjectID, *domain.UpdateCurrentTagline, *cache2.Cache, context.Context)  error
+	UpdateDisplayFollowerCount(primitive.ObjectID, *domain.UpdateDisplayFollowerCount, *cache2.Cache) error
 	UpdateVerification(primitive.ObjectID, *domain.UpdateVerification) error
 	UpdatePassword(primitive.ObjectID, string) error
 	UpdateFlagCount(*domain.Flag) error
@@ -100,6 +101,15 @@ func (s DefaultUserService) GetUserByUsername(username string, rdb *cache2.Cache
 func (s DefaultUserService) UpdateProfileVisibility(id primitive.ObjectID, user *domain.UpdateProfileVisibility, rdb *cache2.Cache, ctx context.Context) error {
 	user.UpdatedAt = time.Now()
 	err := s.repo.UpdateProfileVisibility(id, user, rdb, ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s DefaultUserService) UpdateDisplayFollowerCount(id primitive.ObjectID, user *domain.UpdateDisplayFollowerCount, rdb *cache2.Cache) error {
+	user.UpdatedAt = time.Now()
+	err := s.repo.UpdateDisplayFollowerCount(id, user, rdb)
 	if err != nil {
 		return err
 	}

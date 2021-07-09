@@ -95,6 +95,8 @@ type UserDto struct {
 	AcceptMessages              bool                 `json:"acceptMessages"`
 	FollowerCount               int                  `json:"followerCount"`
 	DisplayFollowerCount        bool                 `json:"displayFollowerCount"`
+	Followers                   []string             `bson:"followers" json:"-"`
+	Following                   []string             `bson:"following" json:"-"`
 	IsVerified                  bool                 `bson:"isVerified" json:"-"`
 	BlockList                   []primitive.ObjectID `bson:"blockList" json:"-"`
 	BlockByList                 []primitive.ObjectID `bson:"blockByList" json:"-"`

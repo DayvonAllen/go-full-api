@@ -33,6 +33,7 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("flag/:username", uh.UpdateFlagCount)
 	user.Post("/", uh.CreateUser)
 	user.Put("/profile-visibility", uh.UpdateProfileVisibility)
+	user.Put("/follower-count", uh.UpdateDisplayFollowerCount)
 	user.Put("/message-acceptance", uh.UpdateMessageAcceptance)
 	user.Put("/current-badge", uh.UpdateCurrentBadge)
 	user.Put("/profile-photo", uh.UpdateProfilePicture)

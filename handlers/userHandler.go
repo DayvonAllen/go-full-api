@@ -186,6 +186,40 @@ func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
+func (uh *UserHandler) UpdateDisplayFollowerCount(c *fiber.Ctx) error {
+	c.Accepts("application/json")
+	token := c.Get("Authorization")
+
+	var auth domain.Authentication
+	u, loggedIn, err := auth.IsLoggedIn(token)
+
+	if err != nil || loggedIn == false {
+		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
+	}
+
+	userDto := new(domain.UpdateDisplayFollowerCount)
+
+	err = c.BodyParser(userDto)
+
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+	defer cache.RedisCachePool.Put(rdb)
+
+	err = uh.UserService.UpdateDisplayFollowerCount(u.Id, userDto, rdb)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+		}
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+	}
+
+	return c.Status(204).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
+}
+
 func (uh *UserHandler) UpdateMessageAcceptance(c *fiber.Ctx) error {
 	c.Accepts("application/json")
 	token := c.Get("Authorization")
