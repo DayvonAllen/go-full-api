@@ -66,8 +66,13 @@
   - `PUT:http://localhost:8080/users/unblock/<username of user you want to unblock>`
 - Delete current user account: (protected, needs token)
   - `DELETE:http://localhost:8080/users/delete`
-- Follow User:
+- Follow User (protected, needs token):
     - `PUT:http://localhost:8080/users/follow/<username>`
-- Unfollow User:
+- Unfollow User (protected, needs token):
     - `PUT:http://localhost:8080/users/unfollow/<username>`
+- Update Display followers count: (protected, needs token)
+    - `PUT:http://localhost:8080/users/follower-count`
+    - JSON: `{
+      "displayFollowerCount": true
+      }`    
  ---   
