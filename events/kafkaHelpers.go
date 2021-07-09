@@ -40,6 +40,7 @@ func SendKafkaMessage(user *domain.User, eventType int) error {
 
 	// user created/updated event
 	um.MessageType = eventType
+	um.ResourceType = "user"
 
 	// turn user struct into a byte array
 	b, err := msgpack.Marshal(&um)

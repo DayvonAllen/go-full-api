@@ -6,4 +6,5 @@ package domain
 type UserMessage struct {
 	User *User `form:"user" json:"user"`
 	MessageType int `form:"messageType" json:"messageType"`
+	ResourceType string `form:"resourceType" json:"resourceType"`
 }
