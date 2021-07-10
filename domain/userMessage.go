@@ -5,6 +5,7 @@ package domain
 // messageType 204 user deleted
 type Message struct {
 	User User `form:"User" json:"User"`
+	Event        Event  `form:"Event" json:"Event"`
 	MessageType int `form:"messageType" json:"messageType"`
 	ResourceType string `form:"resourceType" json:"resourceType"`
 }

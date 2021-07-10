@@ -7,7 +7,7 @@ import (
 )
 
 type AuthService interface {
-	Login(username, password string) (*domain.UserDto, string, error)
+	Login(username string, password string, ip string, ips []string) (*domain.UserDto, string, error)
 	ResetPasswordQuery(email string) error
 	ResetPassword(token, password string) error
 	VerifyCode(code string) error
@@ -17,8 +17,8 @@ type DefaultAuthService struct {
 	repo repo.AuthRepo
 }
 
-func (a DefaultAuthService) Login(username, password string) (*domain.UserDto, string, error) {
-	u, token, err := a.repo.Login(username, password)
+func (a DefaultAuthService) Login(username string, password string, ip string, ips []string) (*domain.UserDto, string, error) {
+	u, token, err := a.repo.Login(username, password, ip, ips)
 	if err != nil {
 		return nil, "", err
 	}

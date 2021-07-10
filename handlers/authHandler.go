@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 type AuthHandler struct {
@@ -23,7 +24,7 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 
-	user, token, err := ah.AuthService.Login(details.Email, details.Password)
+	user, token, err := ah.AuthService.Login(strings.ToLower(details.Email), details.Password, c.IP(), c.IPs())
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {

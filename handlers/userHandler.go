@@ -93,64 +93,64 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 	return c.Status(201).JSON(fiber.Map{"status": "success", "message": "success", "data": "success"})
 }
 
-func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
-	token := c.Get("Authorization")
+//func (uh *UserHandler) GetUserByID(c *fiber.Ctx) error {
+//	token := c.Get("Authorization")
+//
+//	var auth domain.Authentication
+//	u, loggedIn, err := auth.IsLoggedIn(token)
+//
+//	if err != nil || loggedIn == false {
+//		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
+//	}
+//
+//	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+//	defer cache.RedisCachePool.Put(rdb)
+//
+//	var data domain.UserDto
+//
+//	err = rdb.Get(c.Context(), util.GenerateKey(u.Username, "finduserbyusername"), &data)
+//
+//	if err == nil {
+//		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
+//	}
+//
+//	user, err := uh.UserService.GetUserByID(u.Id, rdb, c.Context())
+//
+//	if err != nil {
+//		if err == mongo.ErrNoDocuments {
+//			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+//		}
+//		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+//	}
+//	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
+//}
 
-	var auth domain.Authentication
-	u, loggedIn, err := auth.IsLoggedIn(token)
-
-	if err != nil || loggedIn == false {
-		return c.Status(401).JSON(fiber.Map{"status": "error", "message": "error...", "data": "Unauthorized user"})
-	}
-
-	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
-	defer cache.RedisCachePool.Put(rdb)
-
-	var data domain.UserDto
-
-	err = rdb.Get(c.Context(), util.GenerateKey(u.Username, "finduserbyusername"), &data)
-
-	if err == nil {
-		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
-	}
-
-	user, err := uh.UserService.GetUserByID(u.Id, rdb, c.Context())
-
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-		}
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-	}
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
-}
-
-func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
-	username := c.Params("username")
-
-	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
-	defer cache.RedisCachePool.Put(rdb)
-
-	var data domain.UserDto
-
-	err := rdb.Get(c.Context(), util.GenerateKey(username, "finduserbyusername"), &data)
-
-	if err == nil {
-		fmt.Println("Found in cache in get user by username")
-		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
-	}
-
-	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username), rdb, c.Context())
-
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-		}
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
-	}
-
-	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
-}
+//func (uh *UserHandler) GetUserByUsername(c *fiber.Ctx) error {
+//	username := c.Params("username")
+//
+//	rdb := cache.RedisCachePool.Get().(*cache2.Cache)
+//	defer cache.RedisCachePool.Put(rdb)
+//
+//	var data domain.UserDto
+//
+//	err := rdb.Get(c.Context(), util.GenerateKey(username, "finduserbyusername"), &data)
+//
+//	if err == nil {
+//		fmt.Println("Found in cache in get user by username")
+//		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": data})
+//	}
+//
+//	user, err := uh.UserService.GetUserByUsername(strings.ToLower(username), rdb, c.Context())
+//
+//	if err != nil {
+//		if err == mongo.ErrNoDocuments {
+//			return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+//		}
+//		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
+//	}
+//
+//	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "success", "data": user})
+//}
 
 func (uh *UserHandler) UpdateProfileVisibility(c *fiber.Ctx) error {
 	c.Accepts("application/json")

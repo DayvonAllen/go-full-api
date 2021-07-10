@@ -9,12 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func PushUserToQueue(message []byte) error {
+func PushUserToQueue(message []byte, topic string) error {
 
 	producer := GetInstance()
 
 	msg := &sarama.ProducerMessage{
-		Topic: config.Config("TOPIC"),
+		Topic: topic,
 		Value: sarama.StringEncoder(message),
 	}
 
@@ -50,7 +50,7 @@ func SendKafkaMessage(user *domain.User, eventType int) error {
 		return err
 	}
 
-	err = PushUserToQueue(b)
+	err = PushUserToQueue(b, config.Config("TOPIC"))
 
 	if err != nil {
 		return err
@@ -71,6 +71,31 @@ func HandleKafkaMessage(err error, user *domain.User, messageType int) error {
 
 	if err != nil {
 		fmt.Println("Failed to publish new user")
+	}
+
+	return nil
+}
+
+func SendEventMessage(event *domain.Event, eventType int) error {
+	um := new(domain.Message)
+	um.Event = *event
+
+	// user created/updated event
+	um.MessageType = eventType
+	um.ResourceType = "event"
+
+	fmt.Println(um.Event)
+	//turn user struct into a byte array
+	b, err := msgpack.Marshal(um)
+
+	if err != nil {
+		return err
+	}
+
+	err = PushUserToQueue(b, "event")
+
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -19,7 +19,7 @@ type User struct {
 	UnlockedBadgesUrls          []string             `bson:"unlockedBadgesUrls" json:"unlockedBadgesUrls"`
 	BlockList                   []primitive.ObjectID `bson:"blockList" json:"blockList"`
 	BlockByList                 []primitive.ObjectID `bson:"blockByList" json:"blockByList"`
-	FlagCount                   []primitive.ObjectID `bson:"flagCount" json:"flagCount"`
+	FlagCount                   []primitive.ObjectID `bson:"flagCount" json:"-"`
 	Followers                   []string             `bson:"followers" json:"followers"`
 	Following                   []string             `bson:"following" json:"following"`
 	FollowerCount               int                  `bson:"followerCount" json:"followerCount"`
@@ -31,6 +31,8 @@ type User struct {
 	TokenHash                   string               `bson:"tokenHash" json:"-"`
 	VerificationCode            string               `bson:"verificationCode" json:"-"`
 	TokenExpiresAt              int64                `bson:"tokenExpiresAt" json:"-"`
+	LastLoginIp					string				 `bson:"lastLoginIp" json:"-"`
+	LastLoginIps				[]string			 `bson:"lastLoginIps" json:"-"`
 	CreatedAt                   time.Time            `bson:"createdAt" json:"-"`
 	UpdatedAt                   time.Time            `bson:"updatedAt" json:"-"`
 }

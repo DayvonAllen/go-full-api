@@ -5,6 +5,7 @@ import (
 	"example.com/app/config"
 	"example.com/app/database"
 	"example.com/app/domain"
+	"example.com/app/events"
 	"example.com/app/util"
 	"fmt"
 	"github.com/gofiber/fiber/v2/utils"
@@ -21,7 +22,7 @@ type AuthRepoImpl struct {
 	*domain.User
 }
 
-func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, error) {
+func(a AuthRepoImpl) Login(username string, password string, ip string, ips []string) (*domain.UserDto, string, error) {
 	var login domain.Authentication
 	var user domain.User
 
@@ -31,7 +32,7 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 	if util.IsEmail(username) {
 		opts := options.FindOne()
 		err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"email",
-			strings.ToLower(username)}},opts).Decode(&user)
+			username}},opts).Decode(&user)
 
 		if err != nil {
 			return nil, "", fmt.Errorf("error finding by email")
@@ -39,7 +40,7 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 	} else {
 		opts := options.FindOne()
 		err := conn.UserCollection.FindOne(context.TODO(), bson.D{{"username",
-			strings.ToLower(username)}},opts).Decode(&user)
+			username}},opts).Decode(&user)
 
 		if err != nil {
 			return nil, "", fmt.Errorf("error finding by username")
@@ -59,6 +60,31 @@ func(a AuthRepoImpl) Login(username, password string) (*domain.UserDto, string, 
 	}
 
 	userDto := domain.UserMapper(&user)
+
+	go func() {
+		filter := bson.D{{"username", username}}
+		update := bson.D{{"$set", bson.D{{"lastLoginIp", ip}, {"lastLoginIps", ips}}}}
+
+		_, err := conn.UserCollection.UpdateOne(context.TODO(),
+			filter, update)
+
+		if err != nil {
+			panic(err)
+		}
+		return
+	}()
+
+	go func() {
+		event := new(domain.Event)
+		event.Action = "login"
+		event.Target = username
+		event.Message = username + " has logged in IP: " + ip + "; IPs: " + strings.Join(ips, ", ")
+		err = events.SendEventMessage(event, 0)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			return
+		}
+	}()
 
 	return userDto, token, nil
 }
