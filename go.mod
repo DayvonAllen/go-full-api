@@ -15,7 +15,7 @@ require (
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
-	github.com/vmihailenco/msgpack/v5 v5.1.0
+	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	go.mongodb.org/mongo-driver v1.5.0
 	go.uber.org/atomic v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a

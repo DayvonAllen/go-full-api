@@ -34,16 +34,17 @@ func PushUserToQueue(message []byte) error {
 }
 
 func SendKafkaMessage(user *domain.User, eventType int) error {
-	um := new(domain.UserMessage)
-	um.User = user
-	fmt.Println(um.User)
+	um := new(domain.Message)
+	user.Password = ""
+	um.User = *user
 
 	// user created/updated event
 	um.MessageType = eventType
 	um.ResourceType = "user"
 
-	// turn user struct into a byte array
-	b, err := msgpack.Marshal(&um)
+	fmt.Println(um.User)
+	//turn user struct into a byte array
+	b, err := msgpack.Marshal(um)
 
 	if err != nil {
 		return err
