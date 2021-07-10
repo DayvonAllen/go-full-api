@@ -47,6 +47,8 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 		}
 	}
 
+	fmt.Println("pass")
+
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 
 	if err != nil {
@@ -54,6 +56,8 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 	}
 
 	token, err := login.GenerateJWT(user)
+	fmt.Println("after")
+
 
 	if err != nil {
 		return nil, "", fmt.Errorf("error generating token")
@@ -73,6 +77,7 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 		}
 		return
 	}()
+	fmt.Println("ran")
 
 	go func() {
 		event := new(domain.Event)
@@ -87,6 +92,8 @@ func(a AuthRepoImpl) Login(username string, password string, ip string, ips []st
 			return
 		}
 	}()
+
+	fmt.Println("ran")
 
 	return userDto, token, nil
 }

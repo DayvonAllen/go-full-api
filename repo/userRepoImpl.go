@@ -127,15 +127,18 @@ func (u UserRepoImpl) FindAllBlockedUsers(id primitive.ObjectID, rdb *cache.Cach
 }
 
 func (u UserRepoImpl) Create(user *domain.User) error {
+	fmt.Println("fetching...")
 	conn := database.MongoConnectionPool.Get().(*database.Connection)
 	defer database.MongoConnectionPool.Put(conn)
 
+	fmt.Println("looking...")
 	cur, err := conn.UserCollection.Find(context.TODO(), bson.M{
 		"$or": []interface{}{
 			bson.M{"email": user.Email},
 			bson.M{"username": user.Username},
 		},
 	})
+	fmt.Println("not found...")
 
 	if err != nil {
 		return fmt.Errorf("error processing data")

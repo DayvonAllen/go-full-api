@@ -24,7 +24,9 @@ func (ah *AuthHandler) Login(c *fiber.Ctx) error {
 
 	var auth domain.Authentication
 
+	fmt.Println("ran")
 	user, token, err := ah.AuthService.Login(strings.ToLower(details.Email), details.Password, c.IP(), c.IPs())
+	fmt.Println("ran")
 
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {

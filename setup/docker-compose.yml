@@ -9,7 +9,6 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
   kafka1:
     image: confluentinc/cp-kafka:latest
     hostname: kafka1
@@ -61,9 +60,6 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
 #      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
-
-
-
 
   mongo:
     image: mongo
