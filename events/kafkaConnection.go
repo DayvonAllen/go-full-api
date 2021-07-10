@@ -25,7 +25,7 @@ func GetInstance() *Connection {
 }
 
 func connectProducer() (sarama.SyncProducer,error) {
-	brokersUrl := []string{"localhost:9092"}
+	brokersUrl := []string{"localhost:19092", "localhost:29092", "localhost:39092"}
 
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
