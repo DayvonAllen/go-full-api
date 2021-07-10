@@ -78,6 +78,14 @@ func (uh *UserHandler) CreateUser(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("%v", err)})
 	}
 
+	if !util.IsEmail(createUserDto.Email) {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("invalid email")})
+	}
+
+	if len(createUserDto.Username) <= 1 {
+		return c.Status(400).JSON(fiber.Map{"status": "error", "message": "error...", "data": fmt.Sprintf("invalid username")})
+	}
+
 	user := util.CreateUser(createUserDto)
 
 	user.Following = make([]string,0, 0)
