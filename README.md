@@ -44,8 +44,6 @@
   - `PUT:http://localhost:8080/auth/reset/<token should be in the console of the go app, place here>`
 - Verify Account:
   - `PUT:http://localhost:8080/auth/account/<Token is in MongoDB user collection, place here>`
-- Get User's account: (protected, needs token)
-  - `GET:http://localhost:8080/users/account`
 - Flag user: (protected, needs token):
   - `POST:http://localhost:8080/users/flag/<username of person to flag>`
 - Update profile visibility: (protected, needs token)

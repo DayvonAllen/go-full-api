@@ -27,8 +27,6 @@ func SetupRoutes(app *fiber.App) {
 	user := api.Group("/users")
 	user.Get("/", uh.GetAllUsers)
 	user.Get("/blocked", uh.GetAllBlockedUsers)
-	//user.Get("/account", middleware.IsLoggedIn, uh.GetUserByID)
-	//user.Get("/:username", middleware.IsLoggedIn, uh.GetUserByUsername)
 	user.Post("flag/:username", uh.UpdateFlagCount)
 	user.Post("/", uh.CreateUser)
 	user.Put("/profile-visibility", uh.UpdateProfileVisibility)
