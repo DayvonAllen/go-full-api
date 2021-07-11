@@ -74,5 +74,5 @@
     - `PUT:http://localhost:8080/users/follower-count`
     - JSON: `{
       "displayFollowerCount": true
-      }`    
+      }`
  ---   

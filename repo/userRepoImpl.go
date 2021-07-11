@@ -683,6 +683,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 	// execute this code in a logical transaction
 	callback := func(sessionContext mongo.SessionContext) (interface{}, error) {
 
+		// todo fix query
 		filter := bson.D{{"_id", id}}
 		update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
 
@@ -721,6 +722,39 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 
 		fmt.Println("Removed from cache, block user")
 
+		return
+	}()
+
+	go func() {
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", u.userDto.Username}}).Decode(&u.user)
+
+		if err != nil {
+			panic(err)
+			return
+		}
+
+		err = events.SendKafkaMessage(&u.user, 200)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			panic(err)
+			return
+		}
+
+		user := new(domain.User)
+
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(user)
+
+		if err != nil {
+			panic(err)
+			return
+		}
+
+		err = events.SendKafkaMessage(user, 200)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			panic(err)
+			return
+		}
 		return
 	}()
 
@@ -818,6 +852,39 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 
 		fmt.Println("Removed from cache, unblock user")
 
+		return
+	}()
+
+	go func() {
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", u.userDto.Username}}).Decode(&u.user)
+
+		if err != nil {
+			panic(err)
+			return
+		}
+
+
+		err = events.SendKafkaMessage(&u.user, 200)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			panic(err)
+			return
+		}
+
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.user)
+
+		if err != nil {
+			panic(err)
+			return
+		}
+
+
+		err = events.SendKafkaMessage(&u.user, 200)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			panic(err)
+			return
+		}
 		return
 	}()
 
