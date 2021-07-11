@@ -660,8 +660,8 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 		return err
 	}
 
-	for _, foundId := range u.userDto.BlockByList {
-		if foundId == id {
+	for _, foundUsername := range u.userDto.BlockByList {
+		if foundUsername == username {
 			return fmt.Errorf("already blocked")
 		}
 	}
@@ -685,7 +685,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 
 		// todo fix query
 		filter := bson.D{{"_id", id}}
-		update := bson.M{"$push": bson.M{"blockList": u.userDto.Id}}
+		update := bson.M{"$push": bson.M{"blockList": u.userDto.Username}}
 
 		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
@@ -695,7 +695,7 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 		}
 
 		filter = bson.D{{"_id", u.userDto.Id}}
-		update = bson.M{"$push": bson.M{"blockByList": id}}
+		update = bson.M{"$push": bson.M{"blockByList": currentUsername}}
 
 		_, err = conn.UserCollection.UpdateOne(context.TODO(),
 			filter, update)
@@ -726,23 +726,8 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 	}()
 
 	go func() {
-		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", u.userDto.Username}}).Decode(&u.user)
-
-		if err != nil {
-			panic(err)
-			return
-		}
-
-		err = events.SendKafkaMessage(&u.user, 200)
-		if err != nil {
-			fmt.Println("Error publishing...")
-			panic(err)
-			return
-		}
-
 		user := new(domain.User)
-
-		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(user)
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", u.userDto.Username}}).Decode(user)
 
 		if err != nil {
 			panic(err)
@@ -750,6 +735,22 @@ func (u UserRepoImpl) BlockUser(id primitive.ObjectID, username string, rdb *cac
 		}
 
 		err = events.SendKafkaMessage(user, 200)
+		if err != nil {
+			fmt.Println("Error publishing...")
+			panic(err)
+			return
+		}
+
+		user2 := new(domain.User)
+
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUsername}}).Decode(user2)
+
+		if err != nil {
+			panic(err)
+			return
+		}
+
+		err = events.SendKafkaMessage(user2, 200)
 		if err != nil {
 			fmt.Println("Error publishing...")
 			panic(err)
@@ -780,7 +781,13 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 		return err
 	}
 
-	newBlockList, userIsBlocked := util.GenerateNewBlockList(id, u.userDto.BlockByList)
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUsername}}).Decode(&u.user)
+
+	if err != nil {
+		return err
+	}
+
+	newBlockList, userIsBlocked := util.GenerateNewBlockList(username, u.user.BlockList)
 
 	if !userIsBlocked {
 		return fmt.Errorf("this user is not blocked")
@@ -789,9 +796,9 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	currentUser := new(domain.UserDto)
 
 	// todo better query
-	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&currentUser)
+	err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUsername}}).Decode(&currentUser)
 
-	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Id, currentUser.BlockList)
+	blockList, userIsBlocked := util.GenerateNewBlockList(u.userDto.Username, currentUser.BlockList)
 
 	if !userIsBlocked {
 		return fmt.Errorf("this user is not blocked")
@@ -856,30 +863,31 @@ func (u UserRepoImpl) UnblockUser(id primitive.ObjectID, username string, rdb *c
 	}()
 
 	go func() {
-		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", u.userDto.Username}}).Decode(&u.user)
+		user := new(domain.User)
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", u.userDto.Username}}).Decode(user)
 
 		if err != nil {
 			panic(err)
 			return
 		}
 
-
-		err = events.SendKafkaMessage(&u.user, 200)
+		err = events.SendKafkaMessage(user, 200)
 		if err != nil {
 			fmt.Println("Error publishing...")
 			panic(err)
 			return
 		}
 
-		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", username}}).Decode(&u.user)
+		user2 := new(domain.User)
+
+		err = conn.UserCollection.FindOne(context.TODO(), bson.D{{"username", currentUsername}}).Decode(user2)
 
 		if err != nil {
 			panic(err)
 			return
 		}
 
-
-		err = events.SendKafkaMessage(&u.user, 200)
+		err = events.SendKafkaMessage(user2, 200)
 		if err != nil {
 			fmt.Println("Error publishing...")
 			panic(err)

@@ -1,23 +1,27 @@
 package util
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"regexp"
 	"strings"
 )
 
 var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func GenerateNewBlockList(targetID primitive.ObjectID, blockList []primitive.ObjectID) ([]primitive.ObjectID, bool) {
+func GenerateNewBlockList(targetID string, blockList []string) ([]string, bool) {
 	userIsBlocked := false
-	newBlockList := make([]primitive.ObjectID, 0, len(blockList))
-	for _, foundId := range blockList {
+	newBlockList := make([]string, 0, len(blockList))
+	for i, foundId := range blockList {
 		if foundId == targetID {
 			userIsBlocked = true
 			continue
 		}
 		newBlockList = append(newBlockList, foundId)
+
+		if i == len(blockList) - 1{
+			return newBlockList, userIsBlocked
+		}
 	}
+
 	return newBlockList, userIsBlocked
 }
 

@@ -17,8 +17,8 @@ type User struct {
 	ProfileBackgroundPictureUrl string               `bson:"profileBackgroundPictureUrl" json:"profileBackgroundPictureUrl"`
 	CurrentBadgeUrl             string               `bson:"currentBadgeUrl" json:"currentBadgeUrl"`
 	UnlockedBadgesUrls          []string             `bson:"unlockedBadgesUrls" json:"unlockedBadgesUrls"`
-	BlockList                   []primitive.ObjectID `bson:"blockList" json:"blockList"`
-	BlockByList                 []primitive.ObjectID `bson:"blockByList" json:"blockByList"`
+	BlockList                   []string `bson:"blockList" json:"blockList"`
+	BlockByList                 []string `bson:"blockByList" json:"blockByList"`
 	FlagCount                   []primitive.ObjectID `bson:"flagCount" json:"-"`
 	Followers                   []string             `bson:"followers" json:"followers"`
 	Following                   []string             `bson:"following" json:"following"`
@@ -100,8 +100,8 @@ type UserDto struct {
 	Followers                   []string             `bson:"followers" json:"-"`
 	Following                   []string             `bson:"following" json:"-"`
 	IsVerified                  bool                 `bson:"isVerified" json:"-"`
-	BlockList                   []primitive.ObjectID `bson:"blockList" json:"-"`
-	BlockByList                 []primitive.ObjectID `bson:"blockByList" json:"-"`
+	BlockList                   []string `bson:"blockList" json:"-"`
+	BlockByList                 []string `bson:"blockByList" json:"-"`
 	TokenHash                   string               `bson:"tokenHash" json:"-"`
 	VerificationCode            string               `bson:"verificationCode" json:"-"`
 	TokenExpiresAt              int64                `bson:"tokenExpiresAt" json:"-"`
