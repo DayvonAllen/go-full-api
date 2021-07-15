@@ -10,8 +10,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-
-
 func SetupRoutes(app *fiber.App) {
 	uh := handlers.UserHandler{UserService: services.NewUserService(repo.NewUserRepoImpl())}
 	ah := handlers.AuthHandler{AuthService: services.NewAuthService(repo.NewAuthRepoImpl())}

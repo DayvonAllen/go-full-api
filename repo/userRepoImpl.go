@@ -619,6 +619,7 @@ func (u UserRepoImpl) UpdateFlagCount(flag *domain.Flag) error {
 		return fmt.Errorf("error processing data")
 	}
 
+	// todo send message
 	if !cur.Next(context.TODO()) {
 		flag.Id = primitive.NewObjectID()
 		_, err = conn.FlagCollection.InsertOne(context.TODO(), &flag)
