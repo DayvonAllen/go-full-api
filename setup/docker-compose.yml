@@ -60,6 +60,41 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
 #      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+  kafka4:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka4
+    container_name: kafka4
+    depends_on:
+      - zookeeper
+    ports:
+      - "49092:49092"
+    environment:
+      KAFKA_BROKER_ID: 4
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka4:9092,PLAINTEXT_HOST://localhost:49092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+  #      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+
+  kafka5:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka5
+    container_name: kafka5
+    depends_on:
+      - zookeeper
+    ports:
+      - "59092:59092"
+    environment:
+      KAFKA_BROKER_ID: 5
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka5:9092,PLAINTEXT_HOST://localhost:59092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+    #      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
 
   mongo:
     image: mongo
